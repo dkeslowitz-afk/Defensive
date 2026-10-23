@@ -274,9 +274,6 @@ const UI = {
       case 'target':
         cycleTargeting(this.selected);
         break;
-      case 'rotate':
-        rotateCannon(this.selected);
-        break;
       case 'sell':
         sellTower(run, this.selected);
         this.selected = null;
@@ -300,7 +297,7 @@ const UI = {
     const sig = [
       run.phase, run.wave, this.speedIndex,
       this.pending ? this.pending.c + ',' + this.pending.r : '', this.pendingType,
-      t ? t.id + ':' + t.levels.join('.') + ':' + t.targeting + ':' + t.dir : '',
+      t ? t.id + ':' + t.levels.join('.') + ':' + t.targeting : '',
     ].join('|');
     if (sig !== this.panelSig) {
       this.panelSig = sig;
@@ -366,7 +363,6 @@ const UI = {
   towerMenuHTML(t) {
     const def = t.def;
     let tools = '';
-    if (t.type === 'cannon') tools += '<button class="btn small" data-act="rotate">↻ Rotate</button>';
     if (usesTargeting(t)) tools += '<button class="btn small" data-act="target">🎯 ' + TARGETING_LABELS[t.targeting] + '</button>';
     tools += '<button class="btn small sell" data-act="sell">Sell +' + sellValue(t) + '</button>';
     tools += '<button class="btn small close" data-act="cancel">✕</button>';

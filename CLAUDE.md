@@ -21,7 +21,7 @@ Bloons-style tower placement with short runs (3–5 minutes) and permanent upgra
 
 ## Towers
 Tap an empty spot to open a build menu. Tap a placed tower to upgrade, change targeting, or sell (70% refund). Show tower range when placing or selected.
-1. Cannon: fires in one fixed direction the player sets (rotate button).
+1. Cannon: turns to aim at its target (default: First enemy in range) and fires heavy piercing shells that lead moving targets. (Changed from the original fixed-direction design at the owner's request.)
 2. Burst Tower: fires 8 projectiles in all directions at once.
 3. Tracker: rotates to follow its target and keeps hitting it as it moves.
 4. Coin Generator: doesn't attack; produces bonus coins at the end of each wave.
