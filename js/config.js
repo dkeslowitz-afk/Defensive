@@ -135,12 +135,40 @@ const CONFIG = {
     gemsPerWave: 1,
     gemsBonusEvery: 3,
     winBonusGems: 20,
-    // Workshop: cost of next level = round(baseCost * costGrowth ^ currentLevel)
+    // Workshop: one section for run-wide bonuses ("general") plus one per tower type.
+    // A tower section's upgrades only affect that tower type.
+    // Cost of next level = round(baseCost * costGrowth ^ currentLevel).
+    // effect: 'startCoins' | 'startLives' (flat, per level)
+    //         'statPct'  (+perLevel x100 % to `stat`)
+    //         'speed'    (+perLevel x100 % attack speed)
+    //         'discount' (-perLevel x100 % build cost)
     workshop: {
-      damage: { name: 'Tower Damage',   desc: '+10% damage per level',       perLevel: 0.10, unit: '%',  maxLevel: 10, baseCost: 8,  costGrowth: 1.45 },
-      speed:  { name: 'Attack Speed',   desc: '+8% attack speed per level',  perLevel: 0.08, unit: '%',  maxLevel: 10, baseCost: 8,  costGrowth: 1.45 },
-      coins:  { name: 'Starting Coins', desc: '+20 starting coins per level', perLevel: 20,  unit: '',   maxLevel: 10, baseCost: 6,  costGrowth: 1.4 },
-      lives:  { name: 'Starting Lives', desc: '+2 starting lives per level',  perLevel: 2,   unit: '',   maxLevel: 10, baseCost: 5,  costGrowth: 1.4 },
+      general: {
+        coins: { name: 'Starting Coins', effect: 'startCoins', perLevel: 20, maxLevel: 10, baseCost: 6, costGrowth: 1.4 },
+        lives: { name: 'Starting Lives', effect: 'startLives', perLevel: 2,  maxLevel: 10, baseCost: 5, costGrowth: 1.4 },
+      },
+      cannon: {
+        damage:   { name: 'Damage',       effect: 'statPct', stat: 'damage', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        speed:    { name: 'Attack Speed', effect: 'speed',                   perLevel: 0.08, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        range:    { name: 'Range',        effect: 'statPct', stat: 'range',  perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+        discount: { name: 'Cheaper Build', effect: 'discount',               perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+      },
+      burst: {
+        damage:   { name: 'Damage',       effect: 'statPct', stat: 'damage', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        speed:    { name: 'Attack Speed', effect: 'speed',                   perLevel: 0.08, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        range:    { name: 'Range',        effect: 'statPct', stat: 'range',  perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+        discount: { name: 'Cheaper Build', effect: 'discount',               perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+      },
+      tracker: {
+        damage:   { name: 'Damage',       effect: 'statPct', stat: 'damage', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        speed:    { name: 'Attack Speed', effect: 'speed',                   perLevel: 0.08, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        range:    { name: 'Range',        effect: 'statPct', stat: 'range',  perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+        discount: { name: 'Cheaper Build', effect: 'discount',               perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+      },
+      generator: {
+        income:   { name: 'Coins per Wave', effect: 'statPct', stat: 'coinsPerWave', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        discount: { name: 'Cheaper Build',  effect: 'discount',                      perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
+      },
     },
     unlockCosts: { tracker: 15, generator: 12 },
   },

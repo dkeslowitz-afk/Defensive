@@ -14,6 +14,7 @@ const UI = {
   lastBuiltType: null,
   selected: null,       // placed tower being inspected
   result: null,         // last finishRun() result
+  workshopTab: 'general',
   panelSig: '',
   toastTimer: null,
 
@@ -49,12 +50,23 @@ const UI = {
     });
 
     $('#workshop-list').addEventListener('click', (ev) => {
+      const tabBtn = ev.target.closest('[data-tab]');
+      if (tabBtn) { this.workshopTab = tabBtn.dataset.tab; this.renderWorkshop(); return; }
       const b = ev.target.closest('[data-buy]');
       if (!b) return;
-      const [kind, id] = b.dataset.buy.split(':');
-      const ok = kind === 'unlock' ? Save.unlockTower(id) : Save.buyWorkshop(id);
+      const [kind, section, id] = b.dataset.buy.split(':');
+      const ok = kind === 'unlock' ? Save.unlockTower(section) : Save.buyWorkshop(section, id);
       if (!ok) this.toast('Not enough gems');
       this.renderWorkshop();
+    });
+    $('#btn-refund').addEventListener('click', () => {
+      const gems = Save.refundableGems();
+      if (!gems) { this.toast('Nothing to refund'); return; }
+      if (confirm('Refund all Workshop upgrades for ' + gems + ' gems? Tower unlocks are kept.')) {
+        Save.refundAll();
+        this.renderWorkshop();
+        this.toast('Refunded ' + gems + ' gems');
+      }
     });
 
     $('#shop-list').addEventListener('click', (ev) => {
@@ -73,6 +85,11 @@ const UI = {
     });
 
     this.show('home');
+    if (Save.data.migratedNote) {
+      delete Save.data.migratedNote;
+      Save.save();
+      this.toast('Workshop is now per tower — gems refunded');
+    }
   },
 
   show(name) {
@@ -103,31 +120,44 @@ const UI = {
 
   renderWorkshop() {
     document.querySelectorAll('.gems-count').forEach((el) => (el.textContent = Save.data.gems));
-    let html = '<h3 class="list-heading">Permanent upgrades</h3>';
-    for (const [id, w] of Object.entries(CONFIG.meta.workshop)) {
-      const lvl = Save.data.workshop[id];
-      const cost = Save.workshopCost(id);
-      const now = w.unit === '%' ? Math.round(lvl * w.perLevel * 100) + '%' : lvl * w.perLevel;
+    const sections = Object.keys(CONFIG.meta.workshop);
+    if (!sections.includes(this.workshopTab)) this.workshopTab = 'general';
+    const tab = this.workshopTab;
+
+    let html = '<div class="tabs">';
+    for (const sec of sections) {
+      const label = sec === 'general' ? 'General' : CONFIG.towers[sec].name;
+      const locked = sec !== 'general' && !Save.data.unlocked[sec];
+      html += '<button class="tab' + (sec === tab ? ' sel' : '') + '" data-tab="' + sec + '">' + label + (locked ? ' 🔒' : '') + '</button>';
+    }
+    html += '</div>';
+
+    if (tab === 'general') {
+      html += '<p class="tab-note">Bonuses for every run.</p>';
+    } else {
+      const t = CONFIG.towers[tab];
+      html += '<p class="tab-note"><span class="swatch" style="background:' + t.color + '"></span> ' + t.desc + ' These upgrades only affect ' + t.name + ' towers.</p>';
+      if (!Save.data.unlocked[tab]) {
+        const cost = CONFIG.meta.unlockCosts[tab];
+        html += '<div class="row"><div class="row-info"><div class="row-title">Unlock ' + t.name + '</div>' +
+          '<div class="row-desc">Unlock to build it in runs and upgrade it here.</div></div>' +
+          '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="unlock:' + tab + '">💎 ' + cost + '</button></div>';
+        $('#workshop-list').innerHTML = html;
+        return;
+      }
+    }
+
+    for (const [id, w] of Object.entries(CONFIG.meta.workshop[tab])) {
+      const lvl = Save.level(tab, id);
+      const cost = Save.workshopCost(tab, id);
+      const fx = workshopEffectText(w, lvl);
       html +=
         '<div class="row">' +
           '<div class="row-info"><div class="row-title">' + w.name + ' <span class="muted">Lv ' + lvl + '/' + w.maxLevel + '</span></div>' +
-          '<div class="row-desc">' + w.desc + ' · Now: +' + now + '</div></div>' +
+          '<div class="row-desc">' + fx.per + ' per level · Now: ' + fx.now + '</div></div>' +
           (cost === null
             ? '<button class="btn small" disabled>MAX</button>'
-            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="up:' + id + '">💎 ' + cost + '</button>') +
-        '</div>';
-    }
-    html += '<h3 class="list-heading">Unlock towers</h3>';
-    for (const [id, cost] of Object.entries(CONFIG.meta.unlockCosts)) {
-      const t = CONFIG.towers[id];
-      const owned = Save.data.unlocked[id];
-      html +=
-        '<div class="row">' +
-          '<div class="swatch" style="background:' + t.color + '"></div>' +
-          '<div class="row-info"><div class="row-title">' + t.name + '</div><div class="row-desc">' + t.desc + '</div></div>' +
-          (owned
-            ? '<button class="btn small" disabled>Unlocked ✓</button>'
-            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="unlock:' + id + '">💎 ' + cost + '</button>') +
+            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="up:' + tab + ':' + id + '">💎 ' + cost + '</button>') +
         '</div>';
     }
     $('#workshop-list').innerHTML = html;
@@ -343,18 +373,19 @@ const UI = {
     let cards = '';
     for (const [id, def] of Object.entries(CONFIG.towers)) {
       const locked = !Save.data.unlocked[id];
+      const cost = towerCost(id);
       cards +=
         '<button class="card' + (this.pendingType === id ? ' sel' : '') + (locked ? ' locked' : '') + '" data-act="pick" data-arg="' + id + '"' +
-        (locked ? '' : ' data-cost="' + def.cost + '"') + '>' +
+        (locked ? '' : ' data-cost="' + cost + '"') + '>' +
           '<span class="swatch" style="background:' + def.color + '"></span>' +
           '<span class="card-name">' + def.name + '</span>' +
-          '<span class="card-cost">' + (locked ? '🔒' : '🪙' + def.cost) + '</span>' +
+          '<span class="card-cost">' + (locked ? '🔒' : '🪙' + cost) + '</span>' +
         '</button>';
     }
     const def = this.pendingType ? CONFIG.towers[this.pendingType] : null;
     const footer = def
       ? '<div class="sub-row"><div class="desc">' + def.desc + '</div>' +
-        '<button class="btn small primary" data-act="build" data-cost="' + def.cost + '">Build 🪙' + def.cost + '</button>' +
+        '<button class="btn small primary" data-act="build" data-cost="' + towerCost(this.pendingType) + '">Build 🪙' + towerCost(this.pendingType) + '</button>' +
         '<button class="btn small" data-act="cancel">✕</button></div>'
       : '<div class="sub-row"><div class="desc">Pick a tower to see its range.</div><button class="btn small" data-act="cancel">✕</button></div>';
     return '<div class="cards">' + cards + '</div>' + footer;
@@ -395,6 +426,22 @@ const UI = {
       '<div class="upgrades' + (def.paths.length === 1 ? ' single' : '') + '">' + ups + '</div>';
   },
 };
+
+// "+10% damage" style text for a Workshop upgrade: per level and current total
+function workshopEffectText(w, lvl) {
+  const pct = (v) => Math.round(v * 100) + '%';
+  const total = w.perLevel * lvl;
+  switch (w.effect) {
+    case 'startCoins': return { per: '+' + w.perLevel + ' starting coins', now: '+' + total };
+    case 'startLives': return { per: '+' + w.perLevel + ' starting lives', now: '+' + total };
+    case 'speed':      return { per: '+' + pct(w.perLevel) + ' attack speed', now: '+' + pct(total) };
+    case 'discount':   return { per: '-' + pct(w.perLevel) + ' build cost', now: '-' + pct(total) };
+    default: {
+      const label = { damage: 'damage', range: 'range', coinsPerWave: 'coins per wave' }[w.stat] || w.stat;
+      return { per: '+' + pct(w.perLevel) + ' ' + label, now: '+' + pct(total) };
+    }
+  }
+}
 
 function fmt(n) {
   return Math.round(n * 10) / 10;

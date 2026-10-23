@@ -26,6 +26,11 @@ function createTower(type, c, r) {
   return t;
 }
 
+// Build cost after this tower type's Workshop discount
+function towerCost(type) {
+  return Math.round(CONFIG.towers[type].cost * (1 - Save.bonus(type, 'discount')));
+}
+
 function isAttacker(t) { return t.type !== 'generator'; }
 function usesTargeting(t) { return t.type === 'cannon' || t.type === 'tracker'; }
 
@@ -39,8 +44,11 @@ function towerStats(t) {
       if (tier.mul) for (const k in tier.mul) s[k] = (s[k] || 0) * tier.mul[k];
     }
   });
-  if (s.damage !== undefined) s.damage *= 1 + Save.bonus('damage');
-  if (s.interval !== undefined) s.interval /= 1 + Save.bonus('speed');
+  // Permanent Workshop upgrades for this tower type only
+  for (const w of Object.values(CONFIG.meta.workshop[t.type] || {})) {
+    if (w.effect === 'statPct' && s[w.stat] !== undefined) s[w.stat] *= 1 + Save.bonus(t.type, 'statPct', w.stat);
+  }
+  if (s.interval !== undefined) s.interval /= 1 + Save.bonus(t.type, 'speed');
   return s;
 }
 
