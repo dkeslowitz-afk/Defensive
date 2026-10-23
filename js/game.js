@@ -8,8 +8,8 @@ function createRun() {
     phase: 'build',
     wave: 0,              // last wave started
     wavesCleared: 0,
-    lives: CONFIG.run.startLives + Save.bonus('lives'),
-    coins: CONFIG.run.startCoins + Save.bonus('coins'),
+    lives: CONFIG.run.startLives + Save.bonus('general', 'startLives'),
+    coins: CONFIG.run.startCoins + Save.bonus('general', 'startCoins'),
     towers: [],
     enemies: [],
     projectiles: [],
@@ -34,10 +34,11 @@ function canBuildAt(run, c, r) {
 }
 
 function buildTower(run, type, c, r) {
-  const def = CONFIG.towers[type];
-  if (!canBuildAt(run, c, r) || !Save.data.unlocked[type] || run.coins < def.cost) return null;
-  run.coins -= def.cost;
+  const cost = towerCost(type);
+  if (!canBuildAt(run, c, r) || !Save.data.unlocked[type] || run.coins < cost) return null;
+  run.coins -= cost;
   const t = createTower(type, c, r);
+  t.spent = cost;
   run.towers.push(t);
   return t;
 }

@@ -10,16 +10,31 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 const files = ['config.js', 'save.js', 'map.js', 'enemies.js', 'towers.js', 'waves.js', 'game.js'];
 const code = files.map((f) => fs.readFileSync(path.join(root, 'js', f), 'utf8')).join('\n') +
-  '\n;globalThis.__api = { CONFIG, Save, GameMap, createRun, buildTower, upgradeTower, startWave, updateRun, towerAt, canBuildAt, nextUpgrade, gemsForRun };';
+  '\n;globalThis.__api = { CONFIG, Save, GameMap, createRun, buildTower, upgradeTower, startWave, updateRun, towerAt, canBuildAt, nextUpgrade, gemsForRun, towerCost };';
 
-function makeApi(saveData) {
+// A save that has spent `budget` gems like a player would: unlock towers, then cheapest upgrade first.
+function makeApi(budget) {
   const store = {};
   const ctx = { localStorage: { getItem: (k) => store[k] || null, setItem: (k, v) => { store[k] = v; } }, Math, console };
   vm.createContext(ctx);
   vm.runInContext(code, ctx);
   const api = ctx.__api;
-  api.Save.load();
-  Object.assign(api.Save.data, JSON.parse(JSON.stringify(saveData)));
+  const S = api.Save;
+  S.load();
+  S.data.gems = budget;
+  if (budget >= 40) S.unlockTower('tracker');
+  if (budget >= 100) S.unlockTower('generator');
+  for (;;) {
+    let best = null;
+    for (const [section, ups] of Object.entries(api.CONFIG.meta.workshop)) {
+      if (section !== 'general' && !S.data.unlocked[section]) continue;
+      for (const id of Object.keys(ups)) {
+        const c = S.workshopCost(section, id);
+        if (c !== null && (!best || c < best.c)) best = { section, id, c };
+      }
+    }
+    if (!best || !S.buyWorkshop(best.section, best.id)) break;
+  }
   return api;
 }
 
@@ -41,8 +56,8 @@ function buildSpots(api) {
   return spots;
 }
 
-function playRun(saveData, style, seed) {
-  const api = makeApi(saveData);
+function playRun(budget, style, seed) {
+  const api = makeApi(budget);
   const rand = rng(seed);
   const run = api.createRun();
   const spots = buildSpots(api).filter((s) => s.near >= (style === 'smart' ? 6 : 3));
@@ -66,7 +81,7 @@ function playRun(saveData, style, seed) {
         } else {
           type = types.filter((t) => t !== 'generator' || rand() < 0.3)[Math.floor(rand() * types.length)] || 'cannon';
         }
-        if (spot && run.coins >= api.CONFIG.towers[type].cost) {
+        if (spot && run.coins >= api.towerCost(type)) {
           api.buildTower(run, type, spot.c, spot.r);
           continue;
         }
@@ -96,23 +111,18 @@ function playRun(saveData, style, seed) {
   return { reached: run.wave, cleared: run.wavesCleared, won: run.phase === 'won', gems: api.gemsForRun(run.wavesCleared, run.phase === 'won') };
 }
 
-function report(label, saveData, style, n = Number(process.env.N || 16)) {
+function report(label, budget, style, n = Number(process.env.N || 16)) {
   const res = [];
-  for (let i = 0; i < n; i++) res.push(playRun(saveData, style, i * 7919 + 1));
+  for (let i = 0; i < n; i++) res.push(playRun(budget, style, i * 7919 + 1));
   const reached = res.map((r) => r.reached).sort((a, b) => a - b);
   const wins = res.filter((r) => r.won).length;
   const avgGems = res.reduce((a, r) => a + r.gems, 0) / n;
   console.log(`${label.padEnd(34)} ${style.padEnd(6)} median wave ${reached[n >> 1]}  range ${reached[0]}-${reached[n - 1]}  wins ${wins}/${n}  avg gems ${avgGems.toFixed(1)}`);
 }
 
-const fresh = { workshop: { damage: 0, speed: 0, coins: 0, lives: 0 }, unlocked: { cannon: true, burst: true, tracker: false, generator: false } };
-const some = { workshop: { damage: 2, speed: 2, coins: 1, lives: 1 }, unlocked: { cannon: true, burst: true, tracker: true, generator: false } };
-const more = { workshop: { damage: 4, speed: 4, coins: 3, lives: 2 }, unlocked: { cannon: true, burst: true, tracker: true, generator: true } };
-const lots = { workshop: { damage: 6, speed: 6, coins: 4, lives: 4 }, unlocked: { cannon: true, burst: true, tracker: true, generator: true } };
-
 for (const style of ['casual', 'smart']) {
-  report('fresh save (first run)', fresh, style);
-  report('a little workshop (~2-3 runs)', some, style);
-  report('more workshop (~5 runs)', more, style);
-  report('lots of workshop (~8 runs)', lots, style);
+  report('fresh save (first run)', 0, style);
+  report('50 gems spent (~2-3 runs)', 50, style);
+  report('120 gems spent (~5 runs)', 120, style);
+  report('250 gems spent (~8 runs)', 250, style);
 }

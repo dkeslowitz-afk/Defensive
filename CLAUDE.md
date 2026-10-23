@@ -30,7 +30,12 @@ Tap an empty spot to open a build menu. Tap a placed tower to upgrade, change ta
 
 ## Meta-progression
 - After each run (win or lose), the player earns gems based on how far they got.
-- A Workshop screen between runs where gems buy permanent upgrades: +% tower damage, +% attack speed, +starting coins, +starting lives, and unlocking towers (the Tracker and Coin Generator start locked).
+- A Workshop screen between runs where gems buy permanent upgrades, organized in tabs (like Kingdom Rush / Bloons TD 6):
+  - General: +starting coins, +starting lives.
+  - One tab per tower type (Cannon, Burst, Tracker, Coin Gen): damage, attack speed, range, cheaper build (Coin Gen: coins per wave, cheaper build). These only affect that tower type, so each tower levels up at its own pace. (Changed from the original all-tower +damage/+speed at the owner's request.)
+  - Unlocking towers (the Tracker and Coin Generator start locked) happens in that tower's tab.
+  - "Refund all" returns spent gems for free so players can try other builds.
+- Upgrades bought during a run apply only to the individual tower they were bought on.
 - Save gems, upgrades, and best wave to localStorage.
 - Screens: Home (Play, Workshop, Shop), Game, Run Over (results + gems earned).
 
