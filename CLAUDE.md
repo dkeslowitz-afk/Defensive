@@ -70,3 +70,11 @@ Tap an empty spot to open a build menu. Tap a placed tower to upgrade, change ta
 - `js/ui.js` — screens, HUD, build/tower panels, input.
 - `js/main.js` — boot + requestAnimationFrame loop.
 - `tools/sim.js` — optional headless balance check: `node tools/sim.js`.
+
+## Review agents (`.claude/agents/`)
+Run these to check work before telling the owner it's done:
+- `qa-tester` — plays the game in a headless phone browser to find bugs.
+- `uat-reviewer` — checks every spec bullet above, pass/fail, from a phone player's view.
+- `qc-reviewer` — code quality, config discipline, phone performance.
+- `security-reviewer` — injection, save tampering, secrets, future ad/IAP risks.
+- `player-panel` — simulated panel of 8 mobile-gamer personas who react to ideas/themes/builds (a gut-check, not real users).
