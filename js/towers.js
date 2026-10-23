@@ -28,7 +28,7 @@ function createTower(type, c, r) {
 
 // Build cost after this tower type's Workshop discount
 function towerCost(type) {
-  return Math.round(CONFIG.towers[type].cost * (1 - Save.bonus(type, 'discount')));
+  return Math.max(1, Math.round(CONFIG.towers[type].cost * (1 - Save.bonus(type, 'discount'))));
 }
 
 function isAttacker(t) { return t.type !== 'generator'; }
@@ -121,18 +121,25 @@ function spawnProjectile(run, t, angle) {
     pierce: Math.round(s.pierce),
     maxDist: s.range * s.shotDistance,
     traveled: 0,
-    radius: t.type === 'cannon' ? 6 : 4,
-    color: t.def.color,
+    radius: s.shotRadius,
+    kind: t.type,          // how render draws it (pepperoni disc / popcorn kernel)
+    spin: 0,
     hit: new Set(),
     alive: true,
   });
+}
+
+// Short visual timers (sauce stream, popcorn bounce). Runs between waves too.
+function tickTowerAnims(t, dt) {
+  if (t.beam) { t.beam.ttl -= dt; if (t.beam.ttl <= 0) t.beam = null; }
+  if (t.popAnim > 0) t.popAnim -= dt;
 }
 
 function updateTower(run, t, dt) {
   if (!isAttacker(t)) return;
   const s = t.stats;
   t.cooldown -= dt;
-  if (t.beam) { t.beam.ttl -= dt; if (t.beam.ttl <= 0) t.beam = null; }
+  tickTowerAnims(t, dt);
 
   const inRange = enemiesInRange(run, t.x, t.y, s.range);
 
@@ -141,21 +148,24 @@ function updateTower(run, t, dt) {
     if (!target) return;
     const aim = leadPoint(t, target);
     const off = turnToward(t, Math.atan2(aim.y - t.y, aim.x - t.x), dt);
-    if (off < 0.15 && t.cooldown <= 0) {
+    if (off < s.aimTolerance && t.cooldown <= 0) {
       spawnProjectile(run, t, t.angle);
       t.cooldown = s.interval;
+      run.onEvent('fire', t);
     }
   } else if (t.type === 'burst') {
     if (t.cooldown <= 0 && inRange.length) {
       const n = Math.round(s.projectiles);
       for (let i = 0; i < n; i++) spawnProjectile(run, t, -Math.PI / 2 + i * (Math.PI * 2 / n));
       t.cooldown = s.interval;
+      t.popAnim = 0.15;
+      run.onEvent('fire', t);
     }
   } else if (t.type === 'tracker') {
     const target = pickTarget(t, inRange);
     if (!target) return;
     const off = turnToward(t, Math.atan2(target.y - t.y, target.x - t.x), dt);
-    if (off < 0.25 && t.cooldown <= 0) {
+    if (off < s.aimTolerance && t.cooldown <= 0) {
       const hits = [target];
       // Chain: jump to nearest other enemies near the last hit
       let last = target;
@@ -164,12 +174,12 @@ function updateTower(run, t, dt) {
         for (const e of run.enemies) {
           if (!e.alive || hits.includes(e)) continue;
           const d = (e.x - last.x) ** 2 + (e.y - last.y) ** 2;
-          if (d < nd && d < 70 * 70) { nd = d; next = e; }
+          if (d < nd && d < s.chainRange * s.chainRange) { nd = d; next = e; }
         }
         if (!next) break;
         hits.push(next); last = next;
       }
-      t.beam = { points: hits.map((e) => ({ x: e.x, y: e.y })), ttl: 0.08 };
+      t.beam = { points: hits.map((e) => ({ x: e.x, y: e.y })), ttl: 0.12 };
       for (const e of hits) damageEnemy(run, e, s.damage);
       t.cooldown = s.interval;
     }
@@ -180,6 +190,7 @@ function updateProjectile(run, p, dt) {
   const mx = p.vx * dt, my = p.vy * dt;
   p.x += mx; p.y += my;
   p.traveled += Math.hypot(mx, my);
+  p.spin += dt * 12;
   if (p.traveled >= p.maxDist || p.x < -20 || p.y < -20 || p.x > GameMap.width + 20 || p.y > GameMap.height + 20) {
     p.alive = false;
     return;

@@ -20,12 +20,14 @@ function createEnemy(type, wave, dist = 0) {
     x: pos.x, y: pos.y,
     alive: true,
     hitFlash: 0,
+    angle: Math.PI / 2,
   };
 }
 
 function updateEnemy(e, dt) {
   e.dist += e.speed * dt;
   const p = GameMap.posAt(e.dist);
+  if (p.x !== e.x || p.y !== e.y) e.angle = Math.atan2(p.y - e.y, p.x - e.x);
   e.x = p.x; e.y = p.y;
   if (e.hitFlash > 0) e.hitFlash -= dt;
 }
@@ -40,7 +42,7 @@ function enemyChildren(e) {
   if (!s) return [];
   const kids = [];
   for (let i = 0; i < s.count; i++) {
-    kids.push(createEnemy(s.type, e.wave, Math.max(0, e.dist - i * 14)));
+    kids.push(createEnemy(s.type, e.wave, Math.max(0, e.dist - i * s.spacing)));
   }
   return kids;
 }

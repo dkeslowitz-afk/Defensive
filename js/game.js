@@ -13,13 +13,14 @@ function createRun() {
     towers: [],
     enemies: [],
     projectiles: [],
+    newEnemies: [],       // split-off kids, added after this step's attacks resolve
     floaters: [],         // floating "+coins" text
     schedule: [],
     waveTime: 0,
     revived: false,
     kills: 0,
     time: 0,
-    onEvent: () => {},    // UI hooks in: 'lost', 'won', 'waveCleared', 'leak'
+    onEvent: () => {},    // UI hooks in: 'lost', 'won', 'waveCleared', 'leak', 'kill', 'fire'
   };
 }
 
@@ -90,7 +91,9 @@ function damageEnemy(run, e, dmg) {
     e.alive = false;
     run.coins += e.def.reward;
     run.kills++;
-    for (const kid of enemyChildren(e)) run.enemies.push(kid);
+    // Queue kids so the shot that squished the parent doesn't also hit them instantly
+    for (const kid of enemyChildren(e)) run.newEnemies.push(kid);
+    run.onEvent('kill', e);
   }
 }
 
@@ -107,7 +110,7 @@ function endWave(run) {
     if (t.type === 'generator') {
       const amt = Math.round(t.stats.coinsPerWave);
       genTotal += amt;
-      addFloater(run, t.x, t.y - 10, '+' + amt, '#ffd54a');
+      addFloater(run, t.x, t.y - 10, '+' + amt, '#b8860b');
     }
   }
   run.coins += genTotal;
@@ -129,7 +132,7 @@ function updateRun(run, dt) {
   run.floaters = run.floaters.filter((f) => f.ttl > 0);
 
   if (run.phase !== 'wave') {
-    for (const t of run.towers) if (t.beam) { t.beam.ttl -= dt; if (t.beam.ttl <= 0) t.beam = null; }
+    for (const t of run.towers) tickTowerAnims(t, dt);
     return;
   }
 
@@ -153,6 +156,10 @@ function updateRun(run, dt) {
 
   for (const t of run.towers) updateTower(run, t, dt);
   for (const p of run.projectiles) if (p.alive) updateProjectile(run, p, dt);
+  if (run.newEnemies.length) {
+    for (const kid of run.newEnemies) run.enemies.push(kid);
+    run.newEnemies.length = 0;
+  }
 
   run.enemies = run.enemies.filter((e) => e.alive);
   run.projectiles = run.projectiles.filter((p) => p.alive);
@@ -177,5 +184,5 @@ function finishRun(run) {
   Save.data.bestWave = Math.max(prevBest, reached);
   Save.data.runs++;
   Save.save();
-  return { won, reached, wavesCleared: run.wavesCleared, gems, kills: run.kills, newBest: reached > prevBest };
+  return { won, reached, wavesCleared: run.wavesCleared, gems, kills: run.kills, newBest: run.wavesCleared > 0 && reached > prevBest };
 }

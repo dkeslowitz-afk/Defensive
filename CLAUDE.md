@@ -10,7 +10,15 @@ The owner works almost entirely from their phone, so keep everything simple to t
 - Commit after each working change with a clear message.
 
 ## Positioning
-Bloons-style tower placement with short runs (3–5 minutes) and permanent upgrades between runs (like The Tower: Idle Tower Defense). Original theme: do NOT use monkeys, balloons, or anything from Bloons. For v1, use simple shapes and colors; we'll pick a theme and real art later.
+Bloons-style tower placement with short runs (3–5 minutes) and permanent upgrades between runs (like The Tower: Idle Tower Defense). Original theme: do NOT use monkeys, balloons, or anything from Bloons. 
+
+## Theme: "Picnic Pests" (chosen by the owner after a player-panel pilot)
+- Pests march across a picnic blanket to steal the pies; "the Snack Squad" (food heroes) defends it. Bright, silly, cozy — never scary.
+- Towers (internal ids unchanged): cannon = Pepperoni (spinning pepperoni discs), burst = Popcorn (kernels pop all directions), tracker = Hot Sauce (stream follows one pest), generator = Tip Jar.
+- Enemies: basic = Ant, fast = Fly, tanky = Beetle, layered = Snail (cracks into a Slug), boss = Big Bandit the Raccoon (drops 3 Beetles).
+- Lives = pies 🥧, coins = crumbs 🍪, gems = Golden Forks 🍴. Board = soft gingham blanket with a crumb-trail path ending at a picnic basket.
+- Art is drawn in code (`js/render.js`), sounds are synthesized (`js/audio.js`); keep everything readable on a small phone (pests must stand out from the blanket).
+
 
 ## Core loop
 - Enemies walk a fixed winding path. Each enemy that reaches the end costs a life. Start with 20 lives.
@@ -59,14 +67,15 @@ Tap an empty spot to open a build menu. Tap a placed tower to upgrade, change ta
 - `index.html` — page shell, screens, loads scripts in order.
 - `css/style.css` — all styling (portrait, thumb-sized buttons).
 - `js/config.js` — ALL balance numbers: map path, enemies, towers + upgrades, waves, workshop, gems.
-- `js/save.js` — localStorage save data (gems, workshop levels, unlocks, best wave).
+- `js/save.js` — localStorage save data (gems, workshop levels, unlocks, best wave, settings). Treat stored data as untrusted: validate/clamp on load.
 - `js/monetization.js` — the only place ads/purchases live (currently fake ads + "coming soon").
+- `js/audio.js` — synthesized sound effects + vibration, respecting the Sound/Vibration settings.
 - `js/map.js` — grid and path geometry.
 - `js/enemies.js` — enemy creation/movement/splitting.
 - `js/towers.js` — tower stats, upgrades, targeting, firing, projectiles.
 - `js/waves.js` — turns wave config into a spawn schedule.
 - `js/game.js` — run state and the update logic (no drawing, no DOM).
-- `js/render.js` — canvas drawing.
+- `js/render.js` — canvas drawing (blanket, Snack Squad, pests, particles).
 - `js/ui.js` — screens, HUD, build/tower panels, input.
 - `js/main.js` — boot + requestAnimationFrame loop.
 - `tools/sim.js` — optional headless balance check: `node tools/sim.js`.

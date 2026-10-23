@@ -16,13 +16,14 @@
     if (run && UI.screen === 'game') {
       if (!UI.paused) {
         let remaining = dt * UI.speed();
-        while (remaining > 0) {
+        // Stop stepping as soon as the run ends (won/lost) so end-of-run logic runs once
+        while (remaining > 0 && (run.phase === 'wave' || run.phase === 'build')) {
           const step = Math.min(MAX_STEP, remaining);
           updateRun(run, step);
           remaining -= step;
         }
       }
-      Render.draw(run, UI);
+      Render.draw(run, UI, dt);
       UI.tick();
     }
     requestAnimationFrame(frame);
