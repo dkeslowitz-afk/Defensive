@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#121a24">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#2f6b3a">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Defensive</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'">
+  <title>Picnic Pests</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,15 +15,20 @@
     <!-- HOME -->
     <section id="screen-home" class="screen">
       <div class="home-inner">
-        <h1 class="title">DEFENSIVE</h1>
-        <p class="subtitle">Tower Defense · v1</p>
+        <div class="hero-emoji">🍕🍿🌶️🫙</div>
+        <h1 class="title">Picnic Pests</h1>
+        <p class="subtitle">The Snack Squad vs. the bugs. Save the pies!</p>
         <div class="chips">
-          <div class="chip">💎 <span id="home-gems">0</span></div>
+          <div class="chip">🍴 <span id="home-gems">0</span> Golden Forks</div>
           <div class="chip">🏆 Best wave <span id="home-best">0</span></div>
         </div>
         <button id="btn-play" class="btn big primary">Play</button>
         <button class="btn big" data-nav="workshop">Workshop</button>
         <button class="btn big" data-nav="shop">Shop</button>
+        <div class="settings-row">
+          <button class="btn small" data-setting="sound">🔊 Sound on</button>
+          <button class="btn small" data-setting="vibrate">📳 Vibration on</button>
+        </div>
       </div>
     </section>
 
@@ -32,7 +37,7 @@
       <header class="screen-header">
         <button class="btn small" data-nav="home">‹ Back</button>
         <h2>Workshop</h2>
-        <div class="chip">💎 <span class="gems-count">0</span></div>
+        <div class="chip">🍴 <span class="gems-count">0</span></div>
       </header>
       <div id="workshop-list" class="list"></div>
       <div class="list-footer">
@@ -54,9 +59,9 @@
     <!-- GAME -->
     <section id="screen-game" class="screen">
       <div id="hud">
-        <div class="hud-item">❤️ <span id="hud-lives">20</span></div>
-        <div class="hud-item">🪙 <span id="hud-coins">0</span></div>
-        <div class="hud-item">🌊 <span id="hud-wave">1/15</span></div>
+        <div class="hud-item" title="Pies left">🥧 <span id="hud-lives">20</span></div>
+        <div class="hud-item" title="Crumbs">🍪 <span id="hud-coins">0</span></div>
+        <div class="hud-item" title="Wave">🐜 <span id="hud-wave">1/15</span></div>
         <button id="btn-pause" class="btn icon" aria-label="Pause">⏸</button>
       </div>
       <div id="canvas-wrap">
@@ -70,8 +75,8 @@
       <div class="home-inner">
         <h1 id="ro-title">Run Over</h1>
         <div id="ro-results" class="results"></div>
-        <div class="gems-earned">💎 +<span id="ro-gems">0</span></div>
-        <button id="btn-double" class="btn big gold">▶ Watch ad to double gems</button>
+        <div class="gems-earned">🍴 +<span id="ro-gems">0</span></div>
+        <button id="btn-double" class="btn big gold">▶ Watch ad to double Golden Forks</button>
         <button class="btn big primary" data-nav="home">Continue</button>
       </div>
     </section>
@@ -82,15 +87,19 @@
     <div class="modal">
       <h2>Paused</h2>
       <button id="btn-resume" class="btn big primary">Resume</button>
+      <div class="settings-row">
+        <button class="btn small" data-setting="sound">🔊 Sound on</button>
+        <button class="btn small" data-setting="vibrate">📳 Vibration on</button>
+      </div>
       <button id="btn-quit" class="btn big">End run</button>
     </div>
   </div>
 
   <div id="overlay-lost" class="overlay hidden">
     <div class="modal">
-      <h2>Out of lives!</h2>
-      <p>You fell on wave <b id="lost-wave">1</b>.</p>
-      <button id="btn-revive" class="btn big gold">▶ Watch ad to revive</button>
+      <h2>The pests ate all the pies!</h2>
+      <p>They got you on wave <b id="lost-wave">1</b>.</p>
+      <button id="btn-revive" class="btn big gold">▶ Watch ad for fresh pies</button>
       <button id="btn-giveup" class="btn big">End run</button>
     </div>
   </div>
@@ -100,6 +109,7 @@
   <script src="js/config.js"></script>
   <script src="js/save.js"></script>
   <script src="js/monetization.js"></script>
+  <script src="js/audio.js"></script>
   <script src="js/map.js"></script>
   <script src="js/enemies.js"></script>
   <script src="js/towers.js"></script>

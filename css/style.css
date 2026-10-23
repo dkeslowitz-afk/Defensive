@@ -3,17 +3,19 @@
    ============================================================ */
 
 :root {
-  --bg: #121a24;
-  --panel: #1a2431;
-  --panel-2: #243143;
-  --line: #34445a;
-  --text: #eef2f7;
-  --muted: #8d9bb0;
-  --primary: #3d8bfd;
-  --primary-2: #2f6fd0;
-  --gold: #e0a92e;
-  --danger: #e05555;
-  --good: #5be37d;
+  /* Picnic palette: grass, cream napkins, ketchup red, mustard gold */
+  --bg: #2f6b3a;
+  --panel: #fff7e8;
+  --panel-2: #f3e3c4;
+  --line: #d8bf93;
+  --text: #3b2a1e;
+  --muted: #8a6f55;
+  --primary: #d9472b;
+  --primary-2: #b13620;
+  --gold: #f2b632;
+  --danger: #c0392b;
+  --good: #2e8b3e;
+  --on-primary: #ffffff;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -68,11 +70,11 @@ html, body {
 .btn:disabled { opacity: 0.45; cursor: default; }
 .btn.big { width: 100%; min-height: 56px; font-size: 18px; border-radius: 14px; }
 .btn.small { min-height: 44px; padding: 8px 12px; font-size: 14px; white-space: nowrap; }
-.btn.primary { background: var(--primary); border-color: var(--primary-2); }
-.btn.gold { background: var(--gold); border-color: #b9871d; color: #1a1a1a; }
+.btn.primary { background: var(--primary); border-color: var(--primary-2); color: var(--on-primary); }
+.btn.gold { background: var(--gold); border-color: #c98f14; color: #3b2a1e; }
 .btn.dim { opacity: 0.7; }
 .btn.icon { min-width: 44px; padding: 6px 10px; font-size: 18px; }
-.btn.sell { color: #ffd2d2; border-color: #7a3b3b; }
+.btn.sell { color: var(--danger); border-color: #d9a093; }
 
 /* ---------- Home / Run over ---------- */
 .home-inner {
@@ -125,7 +127,7 @@ html, body {
   touch-action: manipulation;
   cursor: pointer;
 }
-.tab.sel { background: var(--primary); border-color: var(--primary-2); }
+.tab.sel { background: var(--primary); border-color: var(--primary-2); color: var(--on-primary); }
 .tab-note { color: var(--muted); font-size: 13px; margin: 10px 4px; line-height: 1.4; }
 .tab-note .swatch { width: 12px; height: 12px; vertical-align: -1px; }
 .row {
@@ -196,7 +198,7 @@ html, body {
   touch-action: manipulation;
   cursor: pointer;
 }
-.card.sel { border-color: #fff; background: #2d3d54; }
+.card.sel { border-color: var(--primary); background: #ffe9d6; }
 .card.locked { opacity: 0.45; }
 .card .swatch { width: 22px; height: 22px; }
 .card-name { font-size: 13px; font-weight: 700; }
@@ -217,8 +219,8 @@ html, body {
   font: inherit;
   color: var(--text);
   text-align: left;
-  background: #22344d;
-  border: 1px solid #3c5677;
+  background: #fff0db;
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 6px 8px;
   display: flex;
@@ -233,17 +235,17 @@ html, body {
 .upgrade:active:not(:disabled) { filter: brightness(1.2); }
 .upgrade.maxed { opacity: 0.6; }
 .up-path { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.pips { color: #ffd54a; letter-spacing: 1px; }
+.pips { color: #d99a10; letter-spacing: 1px; }
 .up-line { display: flex; justify-content: space-between; gap: 4px; }
 .up-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.up-desc { font-size: 12px; color: #c4d1e3; }
-.up-cost { font-size: 13px; font-weight: 700; color: #ffd54a; white-space: nowrap; }
+.up-desc { font-size: 12px; color: var(--muted); }
+.up-cost { font-size: 13px; font-weight: 700; color: #b8780a; white-space: nowrap; }
 
 /* ---------- Overlays ---------- */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5, 10, 18, 0.75);
+  background: rgba(30, 20, 10, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -277,7 +279,8 @@ html, body {
   left: 50%;
   bottom: calc(250px + env(safe-area-inset-bottom));
   transform: translateX(-50%) translateY(10px);
-  background: rgba(15, 22, 32, 0.92);
+  background: rgba(59, 42, 30, 0.94);
+  color: #fff7e8;
   border: 1px solid var(--line);
   padding: 8px 14px;
   border-radius: 999px;
@@ -293,3 +296,16 @@ html, body {
   text-overflow: ellipsis;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- Picnic theme extras ---------- */
+.screen#screen-home, .screen#screen-runover { color: #fff7e8; }
+#screen-home .subtitle, #screen-runover .muted { color: #d8ecd0; }
+.hero-emoji { font-size: 40px; letter-spacing: 4px; }
+.title { font-size: 42px; letter-spacing: 1px; text-shadow: 0 3px 0 rgba(0,0,0,0.25); }
+#screen-workshop, #screen-shop { background: var(--panel); }
+.settings-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.card-icon { font-size: 24px; line-height: 1; }
+.tower-icon { font-size: 26px; line-height: 1; }
+.sub-row .btn.small[data-act="cancel"], .tower-head .btn.close { min-width: 44px; }
+#hud { color: var(--text); }
+.chip { color: var(--text); }

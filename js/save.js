@@ -9,7 +9,11 @@ const Save = {
   defaults() {
     const unlocked = {};
     for (const [id, t] of Object.entries(CONFIG.towers)) unlocked[id] = !!t.unlockedByDefault;
-    return { gems: 0, bestWave: 0, runs: 0, workshop: this.emptyWorkshop(), unlocked, adsRemoved: false };
+    return {
+      gems: 0, bestWave: 0, runs: 0,
+      workshop: this.emptyWorkshop(), unlocked, adsRemoved: false,
+      settings: { sound: true, vibrate: true },
+    };
   },
 
   emptyWorkshop() {
@@ -21,24 +25,38 @@ const Save = {
     return ws;
   },
 
+  // Stored data is untrusted (it can be edited or corrupted): copy only known keys,
+  // force numbers to whole values within limits, force flags to true/false.
   load() {
     const d = this.defaults();
+    let s = null;
     try {
       const raw = localStorage.getItem(this.KEY);
-      if (raw) {
-        const s = JSON.parse(raw);
-        Object.assign(d, s);
-        d.unlocked = Object.assign(this.defaults().unlocked, s.unlocked);
-        d.workshop = this.emptyWorkshop();
-        const old = s.workshop || {};
-        if (typeof old.damage === 'number' || typeof old.coins === 'number') {
-          this.migrateFlatWorkshop(d, old);
-        } else {
-          // Merge so new config keys get defaults
-          for (const section of Object.keys(d.workshop)) Object.assign(d.workshop[section], old[section]);
+      if (raw) s = JSON.parse(raw);
+    } catch (e) { /* storage blocked or corrupt — start fresh */ }
+
+    if (s && typeof s === 'object' && !Array.isArray(s)) {
+      const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+      d.gems = wholeNumber(s.gems, 1e9);
+      d.bestWave = wholeNumber(s.bestWave, CONFIG.run.totalWaves);
+      d.runs = wholeNumber(s.runs, 1e9);
+      d.adsRemoved = s.adsRemoved === true;
+      const unlocked = obj(s.unlocked);
+      for (const id of Object.keys(d.unlocked)) if (unlocked[id] === true) d.unlocked[id] = true;
+      const settings = obj(s.settings);
+      d.settings.sound = settings.sound !== false;
+      d.settings.vibrate = settings.vibrate !== false;
+
+      const old = obj(s.workshop);
+      if (typeof old.damage === 'number' || typeof old.coins === 'number') {
+        this.migrateFlatWorkshop(d, old);
+      } else {
+        for (const [section, ups] of Object.entries(CONFIG.meta.workshop)) {
+          const src = obj(old[section]);
+          for (const id of Object.keys(ups)) d.workshop[section][id] = wholeNumber(src[id], ups[id].maxLevel);
         }
       }
-    } catch (e) { /* storage blocked or corrupt — start fresh */ }
+    }
     this.data = d;
     return d;
   },
@@ -47,9 +65,9 @@ const Save = {
   // Refund those gems; starting coins/lives carry over to "general" (same costs).
   migrateFlatWorkshop(d, old) {
     const oldCost = (base, growth, lvl) => { let g = 0; for (let l = 0; l < lvl; l++) g += Math.round(base * Math.pow(growth, l)); return g; };
-    d.gems += oldCost(8, 1.45, old.damage || 0) + oldCost(8, 1.45, old.speed || 0);
-    d.workshop.general.coins = old.coins || 0;
-    d.workshop.general.lives = old.lives || 0;
+    d.gems += oldCost(8, 1.45, wholeNumber(old.damage, 10)) + oldCost(8, 1.45, wholeNumber(old.speed, 10));
+    d.workshop.general.coins = wholeNumber(old.coins, CONFIG.meta.workshop.general.coins.maxLevel);
+    d.workshop.general.lives = wholeNumber(old.lives, CONFIG.meta.workshop.general.lives.maxLevel);
     d.migratedNote = true;
   },
 
@@ -122,6 +140,12 @@ const Save = {
     return total;
   },
 };
+
+// A whole number from 0 to max; anything else (text, NaN, negative) becomes 0.
+function wholeNumber(v, max) {
+  const n = Math.floor(Number(v));
+  return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 0;
+}
 
 function gemsForRun(wavesCleared, won) {
   const m = CONFIG.meta;

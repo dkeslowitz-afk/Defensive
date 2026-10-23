@@ -8,8 +8,8 @@
 
 const Monetization = {
   products: [
-    { id: 'remove_ads',   name: 'Remove Ads',   desc: 'Play without ads. Rewards still free.', comingSoon: true },
-    { id: 'starter_pack', name: 'Starter Pack', desc: 'A bundle of gems and a head start.',    comingSoon: true },
+    { id: 'remove_ads',   name: 'Remove Ads',   desc: 'Get revives and double Golden Forks without watching ads.', comingSoon: true },
+    { id: 'starter_pack', name: 'Picnic Basket', desc: 'A starter bundle of Golden Forks and a head start.', comingSoon: true },
   ],
 
   adsRemoved() {
@@ -28,7 +28,7 @@ const Monetization = {
           '<div class="fake-ad-label">AD (placeholder)</div>' +
           '<div class="fake-ad-title">Your ad here</div>' +
           '<div class="fake-ad-count">' + seconds + '</div>' +
-          '<div class="fake-ad-note">Reward: ' + (placement === 'revive' ? 'Revive' : 'Double gems') + '</div>' +
+          '<div class="fake-ad-note">Reward: ' + (placement === 'revive' ? 'Fresh pies' : 'Double Golden Forks') + '</div>' +
         '</div>';
       document.body.appendChild(overlay);
       const countEl = overlay.querySelector('.fake-ad-count');

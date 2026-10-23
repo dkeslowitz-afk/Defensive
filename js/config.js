@@ -28,83 +28,88 @@ const CONFIG = {
     gameSpeeds: [1, 2, 3],      // fast-forward toggle cycles through these
   },
 
-  // reward = coins per kill, lives = lives lost if it reaches the end
-  // splitsInto = what spawns when it dies
+  // Picnic pests. Internal ids stay generic (basic/fast/...) so saves and wave lists don't change.
+  // reward = crumbs per squish, lives = pies eaten if it reaches the basket
+  // splitsInto = what spawns when it's squished (spacing = px between the kids)
   enemies: {
-    basic:   { name: 'Basic',   hp: 6,   speed: 48,  reward: 2,   radius: 9,  lives: 1,  color: '#e05555', shape: 'circle' },
-    fast:    { name: 'Fast',    hp: 4,   speed: 95,  reward: 2,   radius: 8,  lives: 1,  color: '#f2c94c', shape: 'triangle' },
-    tanky:   { name: 'Tanky',   hp: 34,  speed: 30,  reward: 6,   radius: 12, lives: 2,  color: '#8e6bd6', shape: 'square' },
-    layered: { name: 'Layered', hp: 12,  speed: 44,  reward: 2,   radius: 11, lives: 1,  color: '#3fb4a8', shape: 'ring',
-               splitsInto: { type: 'basic', count: 1 } },
-    boss:    { name: 'Boss',    hp: 900, speed: 18,  reward: 150, radius: 20, lives: 15, color: '#d6336c', shape: 'hexagon',
-               splitsInto: { type: 'tanky', count: 3 } },
+    basic:   { name: 'Ant',    hp: 6,   speed: 48,  reward: 2,   radius: 9,  lives: 1,  color: '#3a2a22', look: 'ant' },
+    fast:    { name: 'Fly',    hp: 4,   speed: 95,  reward: 2,   radius: 8,  lives: 1,  color: '#2f6b4f', look: 'fly' },
+    tanky:   { name: 'Beetle', hp: 34,  speed: 30,  reward: 6,   radius: 12, lives: 2,  color: '#4b3a8c', look: 'beetle' },
+    layered: { name: 'Snail',  hp: 12,  speed: 44,  reward: 2,   radius: 11, lives: 1,  color: '#c98b4a', look: 'snail',
+               splitsInto: { type: 'slug', count: 1, spacing: 14 } },
+    slug:    { name: 'Slug',   hp: 6,   speed: 40,  reward: 1,   radius: 9,  lives: 1,  color: '#a7b04a', look: 'slug' },
+    boss:    { name: 'Big Bandit', hp: 900, speed: 18, reward: 150, radius: 20, lives: 15, color: '#6d6f78', look: 'raccoon',
+               splitsInto: { type: 'tanky', count: 3, spacing: 14 } },
   },
 
+  // The Snack Squad. Internal ids stay cannon/burst/tracker/generator so saves carry over.
   // Tower stats:
   //   damage, range (px), interval (seconds between shots), pierce (enemies per projectile),
-  //   projectileSpeed, shotDistance (how far shots fly, as a multiple of range)
+  //   projectileSpeed, shotDistance (how far shots fly, as a multiple of range),
+  //   shotRadius (projectile hit size), turnSpeed (rad/s), aimTolerance (rad off-target it may fire),
+  //   chain / chainRange (Hot Sauce splash jumps)
   // Upgrades: each path has 3 tiers. "add" adds to a stat, "mul" multiplies it.
   towers: {
     cannon: {
-      name: 'Cannon', cost: 60, color: '#4a90d9', unlockedByDefault: true,
-      desc: 'Turns to aim and fires heavy shells that pierce.',
-      stats: { damage: 3, range: 95, interval: 1.1, pierce: 2, projectileSpeed: 320, shotDistance: 1.6, turnSpeed: 5 },
+      name: 'Pepperoni', icon: '🍕', cost: 60, color: '#d9472b', unlockedByDefault: true,
+      desc: 'Aims and flings spinning pepperoni that slices through pests.',
+      stats: { damage: 3, range: 95, interval: 1.1, pierce: 2, projectileSpeed: 320, shotDistance: 1.6, shotRadius: 6, turnSpeed: 5, aimTolerance: 0.15 },
       paths: [
-        { name: 'Heavy Shells', tiers: [
-          { name: 'Bigger Shells', cost: 60,  desc: '+2 damage',               add: { damage: 2 } },
-          { name: 'Long Barrel',   cost: 110, desc: '+30 range, +2 damage',    add: { range: 30, damage: 2 } },
-          { name: 'Siege Shells',  cost: 260, desc: '+6 damage, +2 pierce',    add: { damage: 6, pierce: 2 } },
+        { name: 'Extra Cheese', tiers: [
+          { name: 'Thick Cut',     cost: 60,  desc: '+2 damage',               add: { damage: 2 } },
+          { name: 'Long Toss',     cost: 110, desc: '+30 range, +2 damage',    add: { range: 30, damage: 2 } },
+          { name: 'Meat Lovers',   cost: 260, desc: '+6 damage, +2 pierce',    add: { damage: 6, pierce: 2 } },
         ]},
-        { name: 'Rapid Loader', tiers: [
-          { name: 'Quick Reload',  cost: 55,  desc: '25% faster firing',        mul: { interval: 0.75 } },
-          { name: 'Piercing Shot', cost: 100, desc: '+3 pierce',                add: { pierce: 3 } },
-          { name: 'Autoloader',    cost: 240, desc: '2x faster firing',         mul: { interval: 0.5 } },
+        { name: 'Deep Dish', tiers: [
+          { name: 'Quick Flick',   cost: 55,  desc: '25% faster flinging',     mul: { interval: 0.75 } },
+          { name: 'Sharp Slices',  cost: 100, desc: '+3 pierce',               add: { pierce: 3 } },
+          { name: 'Pizza Wheel',   cost: 240, desc: '2x faster flinging',      mul: { interval: 0.5 } },
         ]},
       ],
     },
     burst: {
-      name: 'Burst', cost: 70, color: '#e8833a', unlockedByDefault: true,
-      desc: 'Fires 8 shots in every direction at once.',
-      stats: { damage: 2, range: 75, interval: 1.2, pierce: 1, projectileSpeed: 260, shotDistance: 1.0, projectiles: 8 },
+      name: 'Popcorn', icon: '🍿', cost: 70, color: '#f2c14e', unlockedByDefault: true,
+      desc: 'Pops 8 kernels in every direction at once.',
+      stats: { damage: 2, range: 75, interval: 1.2, pierce: 1, projectileSpeed: 260, shotDistance: 1.0, shotRadius: 4, projectiles: 8 },
       paths: [
-        { name: 'Shrapnel', tiers: [
-          { name: 'Sharp Bits',    cost: 50,  desc: '+1 damage',               add: { damage: 1 } },
-          { name: 'Wide Spray',    cost: 100, desc: '+1 pierce, +20 range',    add: { pierce: 1, range: 20 } },
-          { name: 'Razor Storm',   cost: 230, desc: '+3 damage, +1 pierce',    add: { damage: 3, pierce: 1 } },
+        { name: 'Butter Burst', tiers: [
+          { name: 'Salty',         cost: 50,  desc: '+1 damage',               add: { damage: 1 } },
+          { name: 'Big Pop',       cost: 100, desc: '+1 pierce, +20 range',    add: { pierce: 1, range: 20 } },
+          { name: 'Caramel Crunch', cost: 230, desc: '+3 damage, +1 pierce',   add: { damage: 3, pierce: 1 } },
         ]},
-        { name: 'Overdrive', tiers: [
-          { name: 'Hot Core',      cost: 60,  desc: '20% faster firing',       mul: { interval: 0.8 } },
-          { name: 'Twelve Shot',   cost: 110, desc: '12 shots per burst',      add: { projectiles: 4 } },
-          { name: 'Meltdown',      cost: 260, desc: '16 shots, 40% faster',    add: { projectiles: 4 }, mul: { interval: 0.6 } },
+        { name: 'Kettle Corn', tiers: [
+          { name: 'Hot Kettle',    cost: 60,  desc: '20% faster popping',      mul: { interval: 0.8 } },
+          { name: 'Family Size',   cost: 110, desc: '12 kernels per pop',      add: { projectiles: 4 } },
+          { name: 'Movie Night',   cost: 260, desc: '16 kernels, 40% faster',  add: { projectiles: 4 }, mul: { interval: 0.6 } },
         ]},
       ],
     },
     tracker: {
-      name: 'Tracker', cost: 90, color: '#47b86b', unlockedByDefault: false,
-      desc: 'Turns to follow one enemy and zaps it nonstop.',
-      stats: { damage: 2, range: 115, interval: 0.35, turnSpeed: 7, chain: 0 },
+      name: 'Hot Sauce', icon: '🌶️', cost: 90, color: '#e8562a', unlockedByDefault: false,
+      desc: 'Turns to follow one pest and squirts it nonstop.',
+      stats: { damage: 2, range: 115, interval: 0.35, turnSpeed: 7, aimTolerance: 0.25, chain: 0, chainRange: 70 },
       paths: [
-        { name: 'Focus Lens', tiers: [
-          { name: 'Hot Beam',      cost: 70,  desc: '+1 damage',               add: { damage: 1 } },
-          { name: 'Long Lens',     cost: 110, desc: '+35 range',               add: { range: 35 } },
-          { name: 'Plasma Beam',   cost: 280, desc: '+4 damage',               add: { damage: 4 } },
+        { name: 'Ghost Pepper', tiers: [
+          { name: 'Spicy',         cost: 70,  desc: '+1 damage',               add: { damage: 1 } },
+          { name: 'Long Nozzle',   cost: 110, desc: '+35 range',               add: { range: 35 } },
+          { name: 'Ghost Pepper',  cost: 280, desc: '+4 damage',               add: { damage: 4 } },
         ]},
-        { name: 'Overclock', tiers: [
-          { name: 'Fast Cycle',    cost: 65,  desc: '25% faster zaps',         mul: { interval: 0.75 } },
-          { name: 'Arc Jump',      cost: 130, desc: 'Zap jumps to +1 enemy',   add: { chain: 1 } },
-          { name: 'Storm Core',    cost: 270, desc: '40% faster, +1 jump',     mul: { interval: 0.6 }, add: { chain: 1 } },
+        { name: 'Squeeze Bottle', tiers: [
+          { name: 'Quick Squeeze', cost: 65,  desc: '25% faster squirts',      mul: { interval: 0.75 } },
+          { name: 'Splash',        cost: 130, desc: 'Splashes +1 nearby pest', add: { chain: 1 } },
+          { name: 'Fire Hose',     cost: 270, desc: '40% faster, +1 splash',   mul: { interval: 0.6 }, add: { chain: 1 } },
         ]},
       ],
     },
     generator: {
-      name: 'Coin Gen', cost: 80, color: '#d4af37', unlockedByDefault: false,
-      desc: "Doesn't attack. Makes bonus coins after each wave.",
+      name: 'Tip Jar', icon: '🫙', cost: 80, color: '#8fc9e8', unlockedByDefault: false,
+      desc: "Doesn't attack. Collects bonus crumbs after each wave.",
       stats: { coinsPerWave: 25 },
       paths: [
-        { name: 'Output', tiers: [
-          { name: 'Bigger Vault',  cost: 70,  desc: '+15 coins per wave',      add: { coinsPerWave: 15 } },
-          { name: 'Minting Press', cost: 120, desc: '+25 coins per wave',      add: { coinsPerWave: 25 } },
-          { name: 'Gold Reactor',  cost: 200, desc: '+40 coins per wave',      add: { coinsPerWave: 40 } },
+        { name: 'Big Tips', tiers: [
+          { name: 'Bigger Jar',    cost: 70,  desc: '+15 crumbs per wave',     add: { coinsPerWave: 15 } },
+          { name: 'Tip Line',      cost: 120, desc: '+25 crumbs per wave',     add: { coinsPerWave: 25 } },
+          { name: 'Golden Jar',    cost: 200, desc: '+40 crumbs per wave',     add: { coinsPerWave: 40 } },
         ]},
       ],
     },
@@ -144,8 +149,8 @@ const CONFIG = {
     //         'discount' (-perLevel x100 % build cost)
     workshop: {
       general: {
-        coins: { name: 'Starting Coins', effect: 'startCoins', perLevel: 20, maxLevel: 10, baseCost: 6, costGrowth: 1.4 },
-        lives: { name: 'Starting Lives', effect: 'startLives', perLevel: 2,  maxLevel: 10, baseCost: 5, costGrowth: 1.4 },
+        coins: { name: 'Starting Crumbs', effect: 'startCoins', perLevel: 20, maxLevel: 10, baseCost: 6, costGrowth: 1.4 },
+        lives: { name: 'Extra Pies', effect: 'startLives', perLevel: 2,  maxLevel: 10, baseCost: 5, costGrowth: 1.4 },
       },
       cannon: {
         damage:   { name: 'Damage',       effect: 'statPct', stat: 'damage', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
@@ -166,7 +171,7 @@ const CONFIG = {
         discount: { name: 'Cheaper Build', effect: 'discount',               perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
       },
       generator: {
-        income:   { name: 'Coins per Wave', effect: 'statPct', stat: 'coinsPerWave', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
+        income:   { name: 'Crumbs per Wave', effect: 'statPct', stat: 'coinsPerWave', perLevel: 0.10, maxLevel: 10, baseCost: 3, costGrowth: 1.35 },
         discount: { name: 'Cheaper Build',  effect: 'discount',                      perLevel: 0.05, maxLevel: 5,  baseCost: 4, costGrowth: 1.5 },
       },
     },

@@ -16,6 +16,7 @@ const UI = {
   result: null,         // last finishRun() result
   workshopTab: 'general',
   panelSig: '',
+  panelLockUntil: 0,
   toastTimer: null,
 
   init() {
@@ -27,7 +28,16 @@ const UI = {
       if (b) this.show(b.dataset.nav);
     });
 
-    $('#btn-play').addEventListener('click', () => this.startRun());
+    $('#btn-play').addEventListener('click', () => { Sfx.unlock(); this.startRun(); });
+    document.querySelectorAll('[data-setting]').forEach((b) => b.addEventListener('click', () => {
+      const key = b.dataset.setting;
+      Save.data.settings[key] = !Save.data.settings[key];
+      Save.save();
+      Sfx.unlock();
+      if (key === 'sound') Sfx.play('pop');
+      if (key === 'vibrate') Sfx.buzz(40);
+      this.renderSettings();
+    }));
     $('#btn-pause').addEventListener('click', () => this.setPaused(true));
     $('#btn-resume').addEventListener('click', () => this.setPaused(false));
     $('#btn-quit').addEventListener('click', () => { $('#overlay-pause').classList.add('hidden'); this.endRun(); });
@@ -35,18 +45,23 @@ const UI = {
     $('#btn-giveup').addEventListener('click', () => { $('#overlay-lost').classList.add('hidden'); this.endRun(); });
     $('#btn-double').addEventListener('click', () => this.watchDouble());
     $('#btn-reset').addEventListener('click', () => {
-      if (confirm('Reset all progress (gems, upgrades, best wave)?')) { Save.reset(); this.renderWorkshop(); this.toast('Progress reset'); }
+      if (confirm('Reset all progress (Golden Forks, upgrades, best wave)?')) { Save.reset(); this.renderWorkshop(); this.toast('Progress reset'); }
     });
 
     $('#game-canvas').addEventListener('pointerdown', (ev) => {
       ev.preventDefault();
+      Sfx.unlock();
       const p = Render.toMap(ev.clientX, ev.clientY);
       this.tapMap(p.x, p.y);
     });
 
     $('#panel').addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-act]');
-      if (b && !b.disabled) this.panelAction(b.dataset.act, b.dataset.arg);
+      if (!b || b.disabled) return;
+      // Right after building, the tower panel's upgrade/sell buttons appear under the finger: ignore them briefly
+      if ((b.dataset.act === 'upgrade' || b.dataset.act === 'sell') && performance.now() < this.panelLockUntil) return;
+      Sfx.unlock();
+      this.panelAction(b.dataset.act, b.dataset.arg);
     });
 
     $('#workshop-list').addEventListener('click', (ev) => {
@@ -56,16 +71,16 @@ const UI = {
       if (!b) return;
       const [kind, section, id] = b.dataset.buy.split(':');
       const ok = kind === 'unlock' ? Save.unlockTower(section) : Save.buyWorkshop(section, id);
-      if (!ok) this.toast('Not enough gems');
+      if (!ok) this.toast('Not enough Golden Forks');
       this.renderWorkshop();
     });
     $('#btn-refund').addEventListener('click', () => {
       const gems = Save.refundableGems();
       if (!gems) { this.toast('Nothing to refund'); return; }
-      if (confirm('Refund all Workshop upgrades for ' + gems + ' gems? Tower unlocks are kept.')) {
+      if (confirm('Refund all Workshop upgrades for ' + gems + ' Golden Forks? Unlocked towers stay unlocked.')) {
         Save.refundAll();
         this.renderWorkshop();
-        this.toast('Refunded ' + gems + ' gems');
+        this.toast('Refunded ' + gems + ' Golden Forks');
       }
     });
 
@@ -88,7 +103,7 @@ const UI = {
     if (Save.data.migratedNote) {
       delete Save.data.migratedNote;
       Save.save();
-      this.toast('Workshop is now per tower — gems refunded');
+      this.toast('Workshop is now per tower — Golden Forks refunded');
     }
   },
 
@@ -116,6 +131,14 @@ const UI = {
   renderHome() {
     $('#home-gems').textContent = Save.data.gems;
     $('#home-best').textContent = Save.data.bestWave;
+    this.renderSettings();
+  },
+
+  renderSettings() {
+    document.querySelectorAll('[data-setting]').forEach((b) => {
+      const on = Save.data.settings[b.dataset.setting];
+      b.textContent = (b.dataset.setting === 'sound' ? (on ? '🔊 Sound on' : '🔇 Sound off') : (on ? '📳 Vibration on' : '📴 Vibration off'));
+    });
   },
 
   renderWorkshop() {
@@ -136,12 +159,12 @@ const UI = {
       html += '<p class="tab-note">Bonuses for every run.</p>';
     } else {
       const t = CONFIG.towers[tab];
-      html += '<p class="tab-note"><span class="swatch" style="background:' + t.color + '"></span> ' + t.desc + ' These upgrades only affect ' + t.name + ' towers.</p>';
+      html += '<p class="tab-note">' + t.icon + ' ' + t.desc + ' These upgrades only affect ' + t.name + '.</p>';
       if (!Save.data.unlocked[tab]) {
         const cost = CONFIG.meta.unlockCosts[tab];
         html += '<div class="row"><div class="row-info"><div class="row-title">Unlock ' + t.name + '</div>' +
           '<div class="row-desc">Unlock to build it in runs and upgrade it here.</div></div>' +
-          '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="unlock:' + tab + '">💎 ' + cost + '</button></div>';
+          '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="unlock:' + tab + '">🍴 ' + cost + '</button></div>';
         $('#workshop-list').innerHTML = html;
         return;
       }
@@ -157,7 +180,7 @@ const UI = {
           '<div class="row-desc">' + fx.per + ' per level · Now: ' + fx.now + '</div></div>' +
           (cost === null
             ? '<button class="btn small" disabled>MAX</button>'
-            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="up:' + tab + ':' + id + '">💎 ' + cost + '</button>') +
+            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="up:' + tab + ':' + id + '">🍴 ' + cost + '</button>') +
         '</div>';
     }
     $('#workshop-list').innerHTML = html;
@@ -179,29 +202,43 @@ const UI = {
 
   startRun() {
     this.run = createRun();
+    this.speedIndex = 0;
     this.run.onEvent = (name, data) => this.onRunEvent(name, data);
     this.paused = false;
     this.pending = null;
     this.pendingType = null;
     this.selected = null;
     this.show('game');
-    this.toast('Tap an empty square to build');
+    this.toast('Tap the blanket to place a snack');
   },
 
   onRunEvent(name, data) {
-    if (name === 'waveCleared') {
-      this.toast('Wave ' + this.run.wave + ' cleared! +' + (data.bonus + data.genTotal) + ' coins');
+    if (name === 'kill') {
+      Render.burst(data.x, data.y, data.def.color);
+      Sfx.play('squish');
+      if (data.type === 'boss') { Sfx.play('win'); Sfx.buzz([60, 40, 120]); }
+    } else if (name === 'fire') {
+      Sfx.play(data.type === 'burst' ? 'pop' : 'fling');
+    } else if (name === 'leak') {
+      Sfx.play('leak');
+      Sfx.buzz(80);
+    } else if (name === 'waveCleared') {
+      Sfx.play('coin');
+      this.toast('Wave ' + this.run.wave + ' cleared! +' + (data.bonus + data.genTotal) + ' crumbs');
     } else if (name === 'lost') {
+      Sfx.play('lose');
       $('#lost-wave').textContent = this.run.wave;
       $('#btn-revive').classList.toggle('hidden', this.run.revived);
       $('#overlay-lost').classList.remove('hidden');
     } else if (name === 'won') {
+      Sfx.play('win');
       this.endRun();
     }
   },
 
   setPaused(p) {
     this.paused = p;
+    if (p) this.renderSettings();
     $('#overlay-pause').classList.toggle('hidden', !p);
   },
 
@@ -211,7 +248,7 @@ const UI = {
       $('#btn-revive').disabled = false;
       if (ok && revive(this.run)) {
         $('#overlay-lost').classList.add('hidden');
-        this.toast('Revived with ' + CONFIG.run.reviveLives + ' lives!');
+        this.toast('Back with ' + CONFIG.run.reviveLives + ' fresh pies!');
       }
     });
   },
@@ -220,12 +257,12 @@ const UI = {
     this.paused = false;
     this.result = finishRun(this.run);
     const r = this.result;
-    $('#ro-title').textContent = r.won ? 'Victory!' : 'Run Over';
+    $('#ro-title').textContent = r.won ? 'Picnic Saved!' : 'Picnic Over';
     $('#ro-title').className = r.won ? 'win' : '';
     $('#ro-results').innerHTML =
       '<div>Reached wave <b>' + r.reached + '</b> of ' + CONFIG.run.totalWaves + '</div>' +
       '<div>Waves cleared: <b>' + r.wavesCleared + '</b></div>' +
-      '<div>Enemies destroyed: <b>' + r.kills + '</b></div>' +
+      '<div>Pests squished: <b>' + r.kills + '</b></div>' +
       (r.newBest ? '<div class="new-best">New best wave!</div>' : '<div class="muted">Best wave: ' + Save.data.bestWave + '</div>');
     $('#ro-gems').textContent = r.gems;
     $('#btn-double').classList.toggle('hidden', r.gems <= 0);
@@ -276,7 +313,11 @@ const UI = {
     const run = this.run;
     switch (act) {
       case 'start':
-        if (startWave(run)) this.toast((waveHasBoss(run.wave) ? 'BOSS WAVE ' : 'Wave ') + run.wave + '!');
+        if (startWave(run)) {
+          const boss = waveHasBoss(run.wave);
+          this.toast(boss ? 'Big Bandit is coming for the basket!' : 'Wave ' + run.wave + '!');
+          Sfx.play(boss ? 'boss' : 'wave');
+        }
         break;
       case 'speed':
         this.speedIndex = (this.speedIndex + 1) % CONFIG.run.gameSpeeds.length;
@@ -287,8 +328,12 @@ const UI = {
         break;
       case 'build': {
         if (!this.pending || !this.pendingType) break;
+        if (run.coins < towerCost(this.pendingType)) { this.toast('Not enough crumbs'); break; }
         const t = buildTower(run, this.pendingType, this.pending.c, this.pending.r);
-        if (!t) { this.toast('Not enough coins'); break; }
+        if (!t) { this.toast("Can't build there"); break; }
+        // The tower panel appears where Build was; ignore taps briefly so a double-tap doesn't buy an upgrade
+        this.panelLockUntil = performance.now() + 400;
+        Sfx.play('build');
         this.lastBuiltType = this.pendingType;
         this.pending = null;
         this.selected = t;
@@ -299,7 +344,7 @@ const UI = {
         this.selected = null;
         break;
       case 'upgrade':
-        if (!upgradeTower(run, this.selected, Number(arg))) this.toast('Not enough coins');
+        if (!upgradeTower(run, this.selected, Number(arg))) this.toast('Not enough crumbs');
         break;
       case 'target':
         cycleTargeting(this.selected);
@@ -318,7 +363,8 @@ const UI = {
     const run = this.run;
     $('#hud-lives').textContent = run.lives;
     $('#hud-coins').textContent = run.coins;
-    $('#hud-wave').textContent = Math.max(1, run.wave) + '/' + CONFIG.run.totalWaves;
+    const shownWave = run.phase === 'build' ? Math.min(run.wave + 1, CONFIG.run.totalWaves) : run.wave;
+    $('#hud-wave').textContent = shownWave + '/' + CONFIG.run.totalWaves;
 
     if (this.selected && !run.towers.includes(this.selected)) this.selected = null;
 
@@ -354,8 +400,8 @@ const UI = {
     if (this.pending) ctx = this.buildMenuHTML();
     else if (this.selected) ctx = this.towerMenuHTML(this.selected);
     else ctx = '<div class="hint">' + (run.phase === 'wave'
-      ? 'Wave ' + run.wave + ' in progress — <span id="enemies-left"></span> enemies left'
-      : 'Tap an empty square to build.<br>Tap a tower to upgrade or sell.') + '</div>';
+      ? 'Wave ' + run.wave + ' — <span id="enemies-left"></span> pests left'
+      : 'Tap the blanket to place a snack.<br>Tap a snack to upgrade or sell it.') + '</div>';
 
     const canStart = run.phase === 'build';
     const startLabel = canStart
@@ -377,15 +423,15 @@ const UI = {
       cards +=
         '<button class="card' + (this.pendingType === id ? ' sel' : '') + (locked ? ' locked' : '') + '" data-act="pick" data-arg="' + id + '"' +
         (locked ? '' : ' data-cost="' + cost + '"') + '>' +
-          '<span class="swatch" style="background:' + def.color + '"></span>' +
+          '<span class="card-icon">' + def.icon + '</span>' +
           '<span class="card-name">' + def.name + '</span>' +
-          '<span class="card-cost">' + (locked ? '🔒' : '🪙' + cost) + '</span>' +
+          '<span class="card-cost">' + (locked ? '🔒' : '🍪' + cost) + '</span>' +
         '</button>';
     }
     const def = this.pendingType ? CONFIG.towers[this.pendingType] : null;
     const footer = def
       ? '<div class="sub-row"><div class="desc">' + def.desc + '</div>' +
-        '<button class="btn small primary" data-act="build" data-cost="' + towerCost(this.pendingType) + '">Build 🪙' + towerCost(this.pendingType) + '</button>' +
+        '<button class="btn small primary" data-act="build" data-cost="' + towerCost(this.pendingType) + '">Build 🍪' + towerCost(this.pendingType) + '</button>' +
         '<button class="btn small" data-act="cancel">✕</button></div>'
       : '<div class="sub-row"><div class="desc">Pick a tower to see its range.</div><button class="btn small" data-act="cancel">✕</button></div>';
     return '<div class="cards">' + cards + '</div>' + footer;
@@ -406,7 +452,7 @@ const UI = {
       ups += up
         ? '<button class="upgrade" data-act="upgrade" data-arg="' + pi + '" data-cost="' + up.cost + '">' +
             '<span class="up-path">' + p.name + ' <span class="pips">' + pips + '</span></span>' +
-            '<span class="up-line"><span class="up-name">' + up.name + '</span><span class="up-cost">🪙' + up.cost + '</span></span>' +
+            '<span class="up-line"><span class="up-name">' + up.name + '</span><span class="up-cost">🍪' + up.cost + '</span></span>' +
             '<span class="up-desc">' + up.desc + '</span>' +
           '</button>'
         : '<button class="upgrade maxed" disabled>' +
@@ -415,11 +461,11 @@ const UI = {
     });
 
     const info = t.type === 'generator'
-      ? '+' + Math.round(t.stats.coinsPerWave) + ' coins/wave'
+      ? '+' + Math.round(t.stats.coinsPerWave) + ' crumbs/wave'
       : 'Dmg ' + fmt(t.stats.damage) + ' · Rng ' + Math.round(t.stats.range) + ' · ' + fmt(1 / t.stats.interval) + '/s';
 
     return '<div class="tower-head">' +
-        '<span class="swatch" style="background:' + def.color + '"></span>' +
+        '<span class="tower-icon">' + def.icon + '</span>' +
         '<div class="tower-name"><div>' + def.name + '</div><div class="muted small-text">' + info + '</div></div>' +
         tools +
       '</div>' +
@@ -432,12 +478,12 @@ function workshopEffectText(w, lvl) {
   const pct = (v) => Math.round(v * 100) + '%';
   const total = w.perLevel * lvl;
   switch (w.effect) {
-    case 'startCoins': return { per: '+' + w.perLevel + ' starting coins', now: '+' + total };
-    case 'startLives': return { per: '+' + w.perLevel + ' starting lives', now: '+' + total };
+    case 'startCoins': return { per: '+' + w.perLevel + ' starting crumbs', now: '+' + total };
+    case 'startLives': return { per: '+' + w.perLevel + ' extra pies', now: '+' + total };
     case 'speed':      return { per: '+' + pct(w.perLevel) + ' attack speed', now: '+' + pct(total) };
-    case 'discount':   return { per: '-' + pct(w.perLevel) + ' build cost', now: '-' + pct(total) };
+    case 'discount':   return { per: '-' + pct(w.perLevel) + ' build cost', now: total ? '-' + pct(total) : '0%' };
     default: {
-      const label = { damage: 'damage', range: 'range', coinsPerWave: 'coins per wave' }[w.stat] || w.stat;
+      const label = { damage: 'damage', range: 'range', coinsPerWave: 'crumbs per wave' }[w.stat] || w.stat;
       return { per: '+' + pct(w.perLevel) + ' ' + label, now: '+' + pct(total) };
     }
   }
