@@ -164,7 +164,7 @@ const UI = {
         const cost = CONFIG.meta.unlockCosts[tab];
         html += '<div class="row"><div class="row-info"><div class="row-title">Unlock ' + t.name + '</div>' +
           '<div class="row-desc">Unlock to build it in runs and upgrade it here.</div></div>' +
-          '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="unlock:' + tab + '">🍴 ' + cost + '</button></div>';
+          '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="unlock:' + tab + '"><span class="fork">🍴</span> ' + cost + '</button></div>';
         $('#workshop-list').innerHTML = html;
         return;
       }
@@ -180,7 +180,7 @@ const UI = {
           '<div class="row-desc">' + fx.per + ' per level · Now: ' + fx.now + '</div></div>' +
           (cost === null
             ? '<button class="btn small" disabled>MAX</button>'
-            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="up:' + tab + ':' + id + '">🍴 ' + cost + '</button>') +
+            : '<button class="btn small ' + (Save.data.gems >= cost ? 'primary' : 'dim') + '" data-buy="up:' + tab + ':' + id + '"><span class="fork">🍴</span> ' + cost + '</button>') +
         '</div>';
     }
     $('#workshop-list').innerHTML = html;
@@ -216,9 +216,9 @@ const UI = {
     if (name === 'kill') {
       Render.burst(data.x, data.y, data.def.color);
       Sfx.play('squish');
-      if (data.type === 'boss') { Sfx.play('win'); Sfx.buzz([60, 40, 120]); }
+      if (data.type === 'boss') { Sfx.play('bossDown'); Sfx.buzz([60, 40, 120]); this.toast('Big Bandit squished! Watch out for his beetles!'); }
     } else if (name === 'fire') {
-      Sfx.play(data.type === 'burst' ? 'pop' : 'fling');
+      Sfx.play(data.type === 'burst' ? 'pop' : data.type === 'tracker' ? 'squirt' : 'fling');
     } else if (name === 'leak') {
       Sfx.play('leak');
       Sfx.buzz(80);
@@ -260,10 +260,9 @@ const UI = {
     $('#ro-title').textContent = r.won ? 'Picnic Saved!' : 'Picnic Over';
     $('#ro-title').className = r.won ? 'win' : '';
     $('#ro-results').innerHTML =
-      '<div>Reached wave <b>' + r.reached + '</b> of ' + CONFIG.run.totalWaves + '</div>' +
-      '<div>Waves cleared: <b>' + r.wavesCleared + '</b></div>' +
+      '<div>Waves cleared: <b>' + r.wavesCleared + '</b> of ' + CONFIG.run.totalWaves + '</div>' +
       '<div>Pests squished: <b>' + r.kills + '</b></div>' +
-      (r.newBest ? '<div class="new-best">New best wave!</div>' : '<div class="muted">Best wave: ' + Save.data.bestWave + '</div>');
+      (r.newBest ? '<div class="new-best">New best!</div>' : '<div class="muted">Best: ' + Save.data.bestWave + ' waves cleared</div>');
     $('#ro-gems').textContent = r.gems;
     $('#btn-double').classList.toggle('hidden', r.gems <= 0);
     $('#btn-double').disabled = false;
@@ -344,13 +343,15 @@ const UI = {
         this.selected = null;
         break;
       case 'upgrade':
-        if (!upgradeTower(run, this.selected, Number(arg))) this.toast('Not enough crumbs');
+        if (upgradeTower(run, this.selected, Number(arg))) Sfx.play('upgrade');
+        else this.toast('Not enough crumbs');
         break;
       case 'target':
         cycleTargeting(this.selected);
         break;
       case 'sell':
         sellTower(run, this.selected);
+        Sfx.play('sell');
         this.selected = null;
         break;
     }
@@ -433,7 +434,7 @@ const UI = {
       ? '<div class="sub-row"><div class="desc">' + def.desc + '</div>' +
         '<button class="btn small primary" data-act="build" data-cost="' + towerCost(this.pendingType) + '">Build 🍪' + towerCost(this.pendingType) + '</button>' +
         '<button class="btn small" data-act="cancel">✕</button></div>'
-      : '<div class="sub-row"><div class="desc">Pick a tower to see its range.</div><button class="btn small" data-act="cancel">✕</button></div>';
+      : '<div class="sub-row"><div class="desc">Pick a snack to see its range.</div><button class="btn small" data-act="cancel">✕</button></div>';
     return '<div class="cards">' + cards + '</div>' + footer;
   },
 

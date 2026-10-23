@@ -7,7 +7,7 @@ let nextEnemyId = 1;
 function createEnemy(type, wave, dist = 0) {
   const def = CONFIG.enemies[type];
   const w = wave - 1;
-  const mult = 1 + CONFIG.run.hpScaleLinear * w + CONFIG.run.hpScaleQuadratic * w * w;
+  const mult = def.fixedHp ? 1 : 1 + CONFIG.run.hpScaleLinear * w + CONFIG.run.hpScaleQuadratic * w * w;
   const hp = Math.max(1, Math.round(def.hp * mult));
   const pos = GameMap.posAt(dist);
   return {

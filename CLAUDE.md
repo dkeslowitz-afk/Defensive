@@ -8,6 +8,8 @@ The owner works almost entirely from their phone, so keep everything simple to t
 - Mobile-first: portrait layout, touch controls, buttons big enough for thumbs, no hover-only features. Should also work on desktop.
 - Organize code into separate files (game loop, towers, enemies, waves, UI, save data, monetization) so features are easy to add later.
 - Commit after each working change with a clear message.
+- When releasing a change, bump the `?v=N` version on every css/js link in `index.html` so phones load fresh files instead of cached ones.
+- Keep `PROGRESS.md` updated: what shipped, what's open, what's next.
 
 ## Positioning
 Bloons-style tower placement with short runs (3–5 minutes) and permanent upgrades between runs (like The Tower: Idle Tower Defense). Original theme: do NOT use monkeys, balloons, or anything from Bloons. 

@@ -182,6 +182,7 @@ function updateTower(run, t, dt) {
       t.beam = { points: hits.map((e) => ({ x: e.x, y: e.y })), ttl: 0.12 };
       for (const e of hits) damageEnemy(run, e, s.damage);
       t.cooldown = s.interval;
+      run.onEvent('fire', t);
     }
   }
 }

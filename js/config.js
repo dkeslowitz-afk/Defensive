@@ -37,8 +37,9 @@ const CONFIG = {
     tanky:   { name: 'Beetle', hp: 34,  speed: 30,  reward: 6,   radius: 12, lives: 2,  color: '#4b3a8c', look: 'beetle' },
     layered: { name: 'Snail',  hp: 12,  speed: 44,  reward: 2,   radius: 11, lives: 1,  color: '#c98b4a', look: 'snail',
                splitsInto: { type: 'slug', count: 1, spacing: 14 } },
-    slug:    { name: 'Slug',   hp: 6,   speed: 40,  reward: 1,   radius: 9,  lives: 1,  color: '#a7b04a', look: 'slug' },
-    boss:    { name: 'Big Bandit', hp: 900, speed: 18, reward: 150, radius: 20, lives: 15, color: '#6d6f78', look: 'raccoon',
+    slug:    { name: 'Slug',   hp: 6,   speed: 40,  reward: 1,   radius: 9,  lives: 1,  color: '#6f8a1f', look: 'slug' },
+    // fixedHp: wave HP scaling doesn't apply, so the boss can be tuned directly
+    boss:    { name: 'Big Bandit', hp: 1500, fixedHp: true, speed: 18, reward: 150, radius: 20, lives: 15, color: '#6d6f78', look: 'raccoon',
                splitsInto: { type: 'tanky', count: 3, spacing: 14 } },
   },
 

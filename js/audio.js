@@ -8,12 +8,18 @@
 const Sfx = {
   ctx: null,
   lastPlayed: {},
-  MIN_GAP: { pop: 0.06, squish: 0.05, fling: 0.08, coin: 0.05 }, // seconds; stops sound pile-ups
+  MIN_GAP: { pop: 0.06, squish: 0.05, fling: 0.08, squirt: 0.12, coin: 0.05 }, // seconds; stops sound pile-ups
 
+  // Never let sound problems break the game: any failure just means no sound.
   unlock() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (AC) this.ctx = new AC();
+    try {
+      if (this.ctx) {
+        if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+        return;
+      }
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
+    } catch (e) { this.ctx = null; }
   },
 
   enabled() { return this.ctx && Save.data.settings.sound; },
@@ -27,6 +33,10 @@ const Sfx = {
     switch (name) {
       case 'pop':    this.tone(520, 900, 0.07, 'triangle', 0.18); break;
       case 'fling':  this.tone(300, 160, 0.08, 'sawtooth', 0.06); break;
+      case 'squirt': this.noise(0.06, 2500, 0.06); break;
+      case 'upgrade': [660, 880].forEach((f, i) => this.tone(f, f * 1.2, 0.08, 'triangle', 0.15, i * 0.07)); break;
+      case 'sell':   this.tone(900, 500, 0.12, 'square', 0.06); break;
+      case 'bossDown': this.tone(220, 60, 0.4, 'sawtooth', 0.18); [784, 988].forEach((f, i) => this.tone(f, f, 0.12, 'triangle', 0.15, 0.3 + i * 0.1)); break;
       case 'squish': this.noise(0.09, 900, 0.22); this.tone(180, 70, 0.08, 'sine', 0.2); break;
       case 'coin':   this.tone(1200, 1200, 0.06, 'square', 0.05); this.tone(1600, 1600, 0.08, 'square', 0.05, 0.06); break;
       case 'build':  this.tone(220, 330, 0.1, 'triangle', 0.2); break;
