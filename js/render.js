@@ -77,8 +77,7 @@ const Render = {
       const def = CONFIG.towers[ui.pendingType];
       const pos = GameMap.cellCenter(ui.pending.c, ui.pending.r);
       if (def.stats.range) this.rangeCircle(pos.x, pos.y, def.stats.range);
-      this.drawTowerShape({ type: ui.pendingType, def, x: pos.x, y: pos.y, dir: 0, angle: -Math.PI / 2, levels: [0, 0] }, 0.55);
-      if (ui.pendingType === 'cannon') this.cannonLine(pos.x, pos.y, 0, def.stats.range * def.stats.shotDistance);
+      this.drawTowerShape({ type: ui.pendingType, def, x: pos.x, y: pos.y, angle: -Math.PI / 2, levels: [0, 0] }, 0.55);
     }
     if (ui.pending) {
       ctx.strokeStyle = COLORS.select;
@@ -88,7 +87,6 @@ const Render = {
     if (ui.selected) {
       const t = ui.selected;
       if (t.stats.range) this.rangeCircle(t.x, t.y, t.stats.range);
-      if (t.type === 'cannon') this.cannonLine(t.x, t.y, t.dir, t.stats.range * t.stats.shotDistance);
     }
 
     // Towers
@@ -153,20 +151,6 @@ const Render = {
     ctx.stroke();
   },
 
-  cannonLine(x, y, dir, len) {
-    const ctx = this.ctx;
-    const a = -Math.PI / 2 + dir * (Math.PI * 2 / CANNON_DIRECTIONS);
-    ctx.save();
-    ctx.setLineDash([6, 6]);
-    ctx.strokeStyle = 'rgba(120,180,255,0.9)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
-    ctx.stroke();
-    ctx.restore();
-  },
-
   drawTowerShape(t, alpha) {
     const ctx = this.ctx;
     const def = t.def;
@@ -182,10 +166,9 @@ const Render = {
 
     ctx.fillStyle = def.color;
     if (t.type === 'cannon') {
-      const a = -Math.PI / 2 + t.dir * (Math.PI * 2 / CANNON_DIRECTIONS);
       ctx.save();
       ctx.translate(t.x, t.y);
-      ctx.rotate(a);
+      ctx.rotate(t.angle);
       ctx.fillRect(0, -4.5, 19, 9);
       ctx.restore();
       ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI * 2); ctx.fill();

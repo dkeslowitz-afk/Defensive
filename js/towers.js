@@ -4,7 +4,6 @@
 
 const TARGETING_MODES = ['first', 'last', 'strong', 'close'];
 const TARGETING_LABELS = { first: 'First', last: 'Last', strong: 'Strong', close: 'Close' };
-const CANNON_DIRECTIONS = 8; // rotate button steps 45 degrees
 
 let nextTowerId = 1;
 
@@ -18,8 +17,7 @@ function createTower(type, c, r) {
     levels: def.paths.map(() => 0),
     spent: def.cost,
     targeting: 'first',
-    dir: 0,              // cannon: direction index (0 = up, clockwise)
-    angle: -Math.PI / 2, // tracker: current facing
+    angle: -Math.PI / 2, // cannon/tracker: current facing
     cooldown: 0,
     beam: null,          // tracker: last zap, for drawing
     stats: null,
@@ -29,7 +27,7 @@ function createTower(type, c, r) {
 }
 
 function isAttacker(t) { return t.type !== 'generator'; }
-function usesTargeting(t) { return t.type === 'tracker'; }
+function usesTargeting(t) { return t.type === 'cannon' || t.type === 'tracker'; }
 
 // Base stats + purchased upgrades + permanent Workshop bonuses
 function towerStats(t) {
@@ -56,8 +54,24 @@ function sellValue(t) {
   return Math.floor(t.spent * CONFIG.run.sellRefund);
 }
 
-function cannonAngle(t) {
-  return -Math.PI / 2 + t.dir * (Math.PI * 2 / CANNON_DIRECTIONS);
+// Turn toward an angle at turnSpeed. Returns how far off we still are (radians).
+function turnToward(t, want, dt) {
+  let diff = want - t.angle;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  const step = t.stats.turnSpeed * dt;
+  t.angle += Math.abs(diff) <= step ? diff : Math.sign(diff) * step;
+  return Math.abs(diff);
+}
+
+// Where to aim so a shell meets the enemy: predict its spot further along the path.
+function leadPoint(t, e) {
+  let p = { x: e.x, y: e.y };
+  for (let i = 0; i < 2; i++) {
+    const time = Math.hypot(p.x - t.x, p.y - t.y) / t.stats.projectileSpeed;
+    p = GameMap.posAt(e.dist + e.speed * time);
+  }
+  return p;
 }
 
 function enemiesInRange(run, x, y, range) {
@@ -115,8 +129,12 @@ function updateTower(run, t, dt) {
   const inRange = enemiesInRange(run, t.x, t.y, s.range);
 
   if (t.type === 'cannon') {
-    if (t.cooldown <= 0 && inRange.length) {
-      spawnProjectile(run, t, cannonAngle(t));
+    const target = pickTarget(t, inRange);
+    if (!target) return;
+    const aim = leadPoint(t, target);
+    const off = turnToward(t, Math.atan2(aim.y - t.y, aim.x - t.x), dt);
+    if (off < 0.15 && t.cooldown <= 0) {
+      spawnProjectile(run, t, t.angle);
       t.cooldown = s.interval;
     }
   } else if (t.type === 'burst') {
@@ -128,14 +146,8 @@ function updateTower(run, t, dt) {
   } else if (t.type === 'tracker') {
     const target = pickTarget(t, inRange);
     if (!target) return;
-    // Rotate toward target
-    const want = Math.atan2(target.y - t.y, target.x - t.x);
-    let diff = want - t.angle;
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    const step = s.turnSpeed * dt;
-    t.angle += Math.abs(diff) <= step ? diff : Math.sign(diff) * step;
-    if (Math.abs(diff) < 0.25 && t.cooldown <= 0) {
+    const off = turnToward(t, Math.atan2(target.y - t.y, target.x - t.x), dt);
+    if (off < 0.25 && t.cooldown <= 0) {
       const hits = [target];
       // Chain: jump to nearest other enemies near the last hit
       let last = target;

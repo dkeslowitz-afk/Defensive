@@ -57,10 +57,6 @@ function sellTower(run, t) {
   run.towers = run.towers.filter((x) => x !== t);
 }
 
-function rotateCannon(t) {
-  t.dir = (t.dir + 1) % CANNON_DIRECTIONS;
-}
-
 function cycleTargeting(t) {
   const i = TARGETING_MODES.indexOf(t.targeting);
   t.targeting = TARGETING_MODES[(i + 1) % TARGETING_MODES.length];

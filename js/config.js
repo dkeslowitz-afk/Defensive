@@ -46,9 +46,9 @@ const CONFIG = {
   // Upgrades: each path has 3 tiers. "add" adds to a stat, "mul" multiplies it.
   towers: {
     cannon: {
-      name: 'Cannon', cost: 50, color: '#4a90d9', unlockedByDefault: true,
-      desc: 'Fires in one direction. Tap Rotate to aim it.',
-      stats: { damage: 3, range: 100, interval: 0.85, pierce: 3, projectileSpeed: 320, shotDistance: 1.8 },
+      name: 'Cannon', cost: 60, color: '#4a90d9', unlockedByDefault: true,
+      desc: 'Turns to aim and fires heavy shells that pierce.',
+      stats: { damage: 3, range: 95, interval: 1.1, pierce: 2, projectileSpeed: 320, shotDistance: 1.6, turnSpeed: 5 },
       paths: [
         { name: 'Heavy Shells', tiers: [
           { name: 'Bigger Shells', cost: 60,  desc: '+2 damage',               add: { damage: 2 } },

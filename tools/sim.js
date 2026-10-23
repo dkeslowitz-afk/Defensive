@@ -1,7 +1,7 @@
 // Headless balance check. Run: node tools/sim.js
 // Loads the real game logic (no drawing/DOM) and lets simple bots play runs.
-// "casual" mimics a new player (random spots next to the path, little aiming);
-// "smart" aims cannons along the path and upgrades sensibly.
+// "casual" mimics a new player (random spots next to the path, random upgrades);
+// "smart" picks the best spots and upgrades sensibly.
 
 const fs = require('fs');
 const path = require('path');
@@ -10,7 +10,7 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 const files = ['config.js', 'save.js', 'map.js', 'enemies.js', 'towers.js', 'waves.js', 'game.js'];
 const code = files.map((f) => fs.readFileSync(path.join(root, 'js', f), 'utf8')).join('\n') +
-  '\n;globalThis.__api = { CONFIG, Save, GameMap, createRun, buildTower, upgradeTower, startWave, updateRun, towerAt, canBuildAt, nextUpgrade, rotateCannon, gemsForRun };';
+  '\n;globalThis.__api = { CONFIG, Save, GameMap, createRun, buildTower, upgradeTower, startWave, updateRun, towerAt, canBuildAt, nextUpgrade, gemsForRun };';
 
 function makeApi(saveData) {
   const store = {};
@@ -41,22 +41,6 @@ function buildSpots(api) {
   return spots;
 }
 
-function bestCannonDir(api, t) {
-  let best = 0, bestScore = -1;
-  for (let d = 0; d < 8; d++) {
-    const a = -Math.PI / 2 + d * Math.PI / 4;
-    let score = 0;
-    const len = t.stats.range * t.stats.shotDistance;
-    for (let s = 10; s < len; s += 10) {
-      const x = t.x + Math.cos(a) * s, y = t.y + Math.sin(a) * s;
-      const c = Math.floor(x / 40), r = Math.floor(y / 40);
-      if (api.GameMap.isPath(c, r)) score++;
-    }
-    if (score > bestScore) { bestScore = score; best = d; }
-  }
-  return best;
-}
-
 function playRun(saveData, style, seed) {
   const api = makeApi(saveData);
   const rand = rng(seed);
@@ -83,11 +67,7 @@ function playRun(saveData, style, seed) {
           type = types.filter((t) => t !== 'generator' || rand() < 0.3)[Math.floor(rand() * types.length)] || 'cannon';
         }
         if (spot && run.coins >= api.CONFIG.towers[type].cost) {
-          const t = api.buildTower(run, type, spot.c, spot.r);
-          if (t && t.type === 'cannon') {
-            if (style === 'smart') t.dir = bestCannonDir(api, t);
-            else t.dir = rand() < 0.5 ? bestCannonDir(api, t) : Math.floor(rand() * 8);
-          }
+          api.buildTower(run, type, spot.c, spot.r);
           continue;
         }
       }
