@@ -6,19 +6,19 @@
 
 const CONFIG = {
   map: {
-    cols: 8,
-    rows: 11,
+    cols: 9,
+    rows: 10,
     cell: 40,
     // Path waypoints in grid cells [col, row]. Segments must be straight lines.
     // First point starts off-screen (top), last point ends off-screen (bottom).
-    path: [[1, -1], [1, 1], [6, 1], [6, 4], [1, 4], [1, 7], [6, 7], [6, 9], [3, 9], [3, 11]],
+    path: [[1, -1], [1, 1], [7, 1], [7, 4], [1, 4], [1, 7], [7, 7], [7, 10]],
   },
 
   run: {
     startLives: 20,
-    startCoins: 150,
+    startCoins: 170,
     totalWaves: 15,
-    waveClearBonusBase: 15,     // coins at the end of every wave...
+    waveClearBonusBase: 18,     // coins at the end of every wave...
     waveClearBonusPerWave: 3,   // ...plus this much per wave number
     // Enemy HP multiplier on wave w = 1 + hpScaleLinear*(w-1) + hpScaleQuadratic*(w-1)^2
     hpScaleLinear: 0.06,

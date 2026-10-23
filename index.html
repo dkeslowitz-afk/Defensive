@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#121a24">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Defensive</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- HOME -->
+    <section id="screen-home" class="screen">
+      <div class="home-inner">
+        <h1 class="title">DEFENSIVE</h1>
+        <p class="subtitle">Tower Defense · v1</p>
+        <div class="chips">
+          <div class="chip">💎 <span id="home-gems">0</span></div>
+          <div class="chip">🏆 Best wave <span id="home-best">0</span></div>
+        </div>
+        <button id="btn-play" class="btn big primary">Play</button>
+        <button class="btn big" data-nav="workshop">Workshop</button>
+        <button class="btn big" data-nav="shop">Shop</button>
+      </div>
+    </section>
+
+    <!-- WORKSHOP -->
+    <section id="screen-workshop" class="screen">
+      <header class="screen-header">
+        <button class="btn small" data-nav="home">‹ Back</button>
+        <h2>Workshop</h2>
+        <div class="chip">💎 <span class="gems-count">0</span></div>
+      </header>
+      <div id="workshop-list" class="list"></div>
+      <div class="list-footer"><button id="btn-reset" class="btn small dim">Reset progress</button></div>
+    </section>
+
+    <!-- SHOP -->
+    <section id="screen-shop" class="screen">
+      <header class="screen-header">
+        <button class="btn small" data-nav="home">‹ Back</button>
+        <h2>Shop</h2>
+        <div class="chip-spacer"></div>
+      </header>
+      <div id="shop-list" class="list"></div>
+    </section>
+
+    <!-- GAME -->
+    <section id="screen-game" class="screen">
+      <div id="hud">
+        <div class="hud-item">❤️ <span id="hud-lives">20</span></div>
+        <div class="hud-item">🪙 <span id="hud-coins">0</span></div>
+        <div class="hud-item">🌊 <span id="hud-wave">1/15</span></div>
+        <button id="btn-pause" class="btn icon" aria-label="Pause">⏸</button>
+      </div>
+      <div id="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+      </div>
+      <div id="panel"></div>
+    </section>
+
+    <!-- RUN OVER -->
+    <section id="screen-runover" class="screen">
+      <div class="home-inner">
+        <h1 id="ro-title">Run Over</h1>
+        <div id="ro-results" class="results"></div>
+        <div class="gems-earned">💎 +<span id="ro-gems">0</span></div>
+        <button id="btn-double" class="btn big gold">▶ Watch ad to double gems</button>
+        <button class="btn big primary" data-nav="home">Continue</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Overlays -->
+  <div id="overlay-pause" class="overlay hidden">
+    <div class="modal">
+      <h2>Paused</h2>
+      <button id="btn-resume" class="btn big primary">Resume</button>
+      <button id="btn-quit" class="btn big">End run</button>
+    </div>
+  </div>
+
+  <div id="overlay-lost" class="overlay hidden">
+    <div class="modal">
+      <h2>Out of lives!</h2>
+      <p>You fell on wave <b id="lost-wave">1</b>.</p>
+      <button id="btn-revive" class="btn big gold">▶ Watch ad to revive</button>
+      <button id="btn-giveup" class="btn big">End run</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/monetization.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/towers.js"></script>
+  <script src="js/waves.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
