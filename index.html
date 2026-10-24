@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'">
   <title>Picnic Pests</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
   <div id="app">
@@ -19,8 +19,8 @@
         <h1 class="title">Picnic Pests</h1>
         <p class="subtitle">The Snack Squad vs. the bugs. Save the pies!</p>
         <div class="chips">
-          <div class="chip">🍴 <span id="home-gems">0</span> Golden Forks</div>
-          <div class="chip">🏆 Best wave <span id="home-best">0</span></div>
+          <div class="chip"><span class="fork">🍴</span> <span id="home-gems">0</span> Golden Forks</div>
+          <div class="chip">🏆 Best: <span id="home-best">0</span> waves</div>
         </div>
         <button id="btn-play" class="btn big primary">Play</button>
         <button class="btn big" data-nav="workshop">Workshop</button>
@@ -37,7 +37,7 @@
       <header class="screen-header">
         <button class="btn small" data-nav="home">‹ Back</button>
         <h2>Workshop</h2>
-        <div class="chip">🍴 <span class="gems-count">0</span></div>
+        <div class="chip"><span class="fork">🍴</span> <span class="gems-count">0</span></div>
       </header>
       <div id="workshop-list" class="list"></div>
       <div class="list-footer">
@@ -75,7 +75,7 @@
       <div class="home-inner">
         <h1 id="ro-title">Run Over</h1>
         <div id="ro-results" class="results"></div>
-        <div class="gems-earned">🍴 +<span id="ro-gems">0</span></div>
+        <div class="gems-earned"><span class="fork">🍴</span> +<span id="ro-gems">0</span></div>
         <button id="btn-double" class="btn big gold">▶ Watch ad to double Golden Forks</button>
         <button class="btn big primary" data-nav="home">Continue</button>
       </div>
@@ -106,17 +106,17 @@
 
   <div id="toast"></div>
 
-  <script src="js/config.js"></script>
-  <script src="js/save.js"></script>
-  <script src="js/monetization.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/enemies.js"></script>
-  <script src="js/towers.js"></script>
-  <script src="js/waves.js"></script>
-  <script src="js/game.js"></script>
-  <script src="js/render.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/config.js?v=6"></script>
+  <script src="js/save.js?v=6"></script>
+  <script src="js/monetization.js?v=6"></script>
+  <script src="js/audio.js?v=6"></script>
+  <script src="js/map.js?v=6"></script>
+  <script src="js/enemies.js?v=6"></script>
+  <script src="js/towers.js?v=6"></script>
+  <script src="js/waves.js?v=6"></script>
+  <script src="js/game.js?v=6"></script>
+  <script src="js/render.js?v=6"></script>
+  <script src="js/ui.js?v=6"></script>
+  <script src="js/main.js?v=6"></script>
 </body>
 </html>

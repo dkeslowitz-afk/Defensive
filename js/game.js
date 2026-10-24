@@ -92,7 +92,7 @@ function damageEnemy(run, e, dmg) {
     run.coins += e.def.reward;
     run.kills++;
     // Queue kids so the shot that squished the parent doesn't also hit them instantly
-    for (const kid of enemyChildren(e)) run.newEnemies.push(kid);
+    for (const kid of enemyChildren(e)) { kid.parentId = e.id; run.newEnemies.push(kid); }
     run.onEvent('kill', e);
   }
 }
@@ -157,7 +157,11 @@ function updateRun(run, dt) {
   for (const t of run.towers) updateTower(run, t, dt);
   for (const p of run.projectiles) if (p.alive) updateProjectile(run, p, dt);
   if (run.newEnemies.length) {
-    for (const kid of run.newEnemies) run.enemies.push(kid);
+    for (const kid of run.newEnemies) {
+      // A piercing shot that squished the parent counts as having hit the kid too
+      for (const p of run.projectiles) if (p.hit.has(kid.parentId)) p.hit.add(kid.id);
+      run.enemies.push(kid);
+    }
     run.newEnemies.length = 0;
   }
 
@@ -177,12 +181,12 @@ function updateRun(run, dt) {
 function finishRun(run) {
   const won = run.phase === 'won';
   run.phase = 'over';
-  const reached = run.wave; // wave the run ended on (best wave tracks this)
+  const reached = run.wave; // wave the run ended on
   const gems = gemsForRun(run.wavesCleared, won);
   const prevBest = Save.data.bestWave;
   Save.data.gems += gems;
-  Save.data.bestWave = Math.max(prevBest, reached);
+  Save.data.bestWave = Math.max(prevBest, run.wavesCleared); // best = most waves cleared
   Save.data.runs++;
   Save.save();
-  return { won, reached, wavesCleared: run.wavesCleared, gems, kills: run.kills, newBest: run.wavesCleared > 0 && reached > prevBest };
+  return { won, reached, wavesCleared: run.wavesCleared, gems, kills: run.kills, newBest: run.wavesCleared > prevBest };
 }

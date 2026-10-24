@@ -309,3 +309,5 @@ html, body {
 .sub-row .btn.small[data-act="cancel"], .tower-head .btn.close { min-width: 44px; }
 #hud { color: var(--text); }
 .chip { color: var(--text); }
+/* Golden Forks: tint the silver fork emoji gold */
+.fork { display: inline-block; filter: sepia(1) saturate(5) hue-rotate(-8deg) brightness(1.05); }

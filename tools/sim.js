@@ -60,6 +60,8 @@ function playRun(budget, style, seed) {
   const api = makeApi(budget);
   const rand = rng(seed);
   const run = api.createRun();
+  let bossKilled = false;
+  run.onEvent = (name, data) => { if (name === 'kill' && data.type === 'boss') bossKilled = true; };
   const spots = buildSpots(api).filter((s) => s.near >= (style === 'smart' ? 6 : 3));
   if (style === 'smart') spots.sort((a, b) => b.near - a.near);
   else spots.sort(() => rand() - 0.5);
@@ -108,7 +110,7 @@ function playRun(budget, style, seed) {
     }
     if (run.phase === 'won') break;
   }
-  return { reached: run.wave, cleared: run.wavesCleared, won: run.phase === 'won', gems: api.gemsForRun(run.wavesCleared, run.phase === 'won') };
+  return { reached: run.wave, cleared: run.wavesCleared, won: run.phase === 'won', bossKilled, gems: api.gemsForRun(run.wavesCleared, run.phase === 'won') };
 }
 
 function report(label, budget, style, n = Number(process.env.N || 16)) {
@@ -116,8 +118,9 @@ function report(label, budget, style, n = Number(process.env.N || 16)) {
   for (let i = 0; i < n; i++) res.push(playRun(budget, style, i * 7919 + 1));
   const reached = res.map((r) => r.reached).sort((a, b) => a - b);
   const wins = res.filter((r) => r.won).length;
+  const bosses = res.filter((r) => r.bossKilled).length;
   const avgGems = res.reduce((a, r) => a + r.gems, 0) / n;
-  console.log(`${label.padEnd(34)} ${style.padEnd(6)} median wave ${reached[n >> 1]}  range ${reached[0]}-${reached[n - 1]}  wins ${wins}/${n}  avg gems ${avgGems.toFixed(1)}`);
+  console.log(`${label.padEnd(34)} ${style.padEnd(6)} median wave ${reached[n >> 1]}  range ${reached[0]}-${reached[n - 1]}  wins ${wins}/${n}  boss squished ${bosses}/${n}  avg gems ${avgGems.toFixed(1)}`);
 }
 
 for (const style of ['casual', 'smart']) {

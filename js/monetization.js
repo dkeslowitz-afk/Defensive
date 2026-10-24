@@ -9,7 +9,7 @@
 const Monetization = {
   products: [
     { id: 'remove_ads',   name: 'Remove Ads',   desc: 'Get revives and double Golden Forks without watching ads.', comingSoon: true },
-    { id: 'starter_pack', name: 'Picnic Basket', desc: 'A starter bundle of Golden Forks and a head start.', comingSoon: true },
+    { id: 'starter_pack', name: 'Starter Pack', desc: 'A picnic basket of Golden Forks and a head start.', comingSoon: true },
   ],
 
   adsRemoved() {
